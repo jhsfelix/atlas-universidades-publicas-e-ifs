@@ -3,7 +3,7 @@ window.ATLAS = {
     titulo: "Atlas das Universidades Públicas e dos Institutos Federais",
     subtitulo: "Quem mantém, supervisiona, avalia e fomenta cada universidade pública federal, estadual e municipal, e cada Instituto Federal do Brasil",
     atualizado: "2026-09-24",
-    repo: "",
+    repo: "https://github.com/jhsfelix/atlas-universidades-publicas-e-ifs",
     notaFonte: "Nomes, siglas, sedes e sites conforme e-MEC/MEC e portais institucionais. Normas conforme textos oficiais do Planalto."
   },
   tipos: {
