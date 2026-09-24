@@ -1,0 +1,46 @@
+# Atlas das Universidades Públicas e dos Institutos Federais
+
+Roda interativa das relações de governança do ensino superior público brasileiro, no modelo do [Atlas da República](https://atlasdarepublica.org/): quem manda em quê, e com qual norma legal.
+
+**O que está mapeado (149 nós, ~690 relações):**
+
+- **63 universidades federais** — supervisionadas pelo MEC, criadas por lei federal (LDB, art. 46)
+- **38 Institutos Federais** — supervisionados pelo MEC, criados por lei federal (Lei 11.892/2008)
+- **36 universidades estaduais** — mantidas por lei estadual de criação (LDB, art. 10)
+- **Universidades municipais** — em levantamento: as IES municipais existentes são, em regra, mantidas por fundações de direito privado (ex.: USCS). Nenhuma pública confirmada até a data do atlas
+- **Governança** — União, MEC, INEP (SINAES, Lei 10.861/2004), CAPES e CNPq (Lei 11.502/2007), Estados e DF, Municípios, ANDIFES, CONIF e ABRUEM
+
+Cada relação cita a norma que a funda (Constituição art. 211; LDB arts. 9º, 10, 11 e 46; Lei 11.892/2008; Lei 10.861/2004; Lei 11.502/2007; Decreto 1.191/1994 — indicação de reitores).
+
+## Como usar
+
+Abra `index.html` — não há build nem dependências. Dados em `data/atlas.js`, visualização em `js/graph.js` (SVG puro, sem bibliotecas) e interface em `js/app.js`.
+
+- Passe o mouse (ou toque) em um ponto: as relações daquela instituição se destacam
+- Clique: abre a ficha com nome oficial, UF, sede, site e todas as relações com as normas citadas
+- Filtre por tipo e estado, ou busque por sigla, nome, UF e cidade
+
+## Como contribuir
+
+Os dados são mantidos no estilo do Atlas da República: correções e inclusões por issues.
+
+- [`Adicionar instituição`](.github/ISSUE_TEMPLATE/adicionar-instituicao.md) — informe nome oficial, sigla, tipo, UF, cidade-sede, site e a norma de criação com link (e-MEC, Planalto ou lei estadual)
+- [`Corrigir dados`](.github/ISSUE_TEMPLATE/corrigir-dados.md) — informe o que está errado, a correção proposta e a fonte oficial
+
+Números de nós e relações derivam automaticamente do tipo da instituição: ao registrar uma nova, as relações correspondentes são criadas pelo próprio atlas.
+
+## Fontes
+
+- [CF/1988, art. 211](https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm)
+- [LDB — Lei 9.394/1996](https://www.planalto.gov.br/ccivil_03/leis/l9394.htm)
+- [Lei dos IFs — 11.892/2008](https://www.planalto.gov.br/ccivil_03/_ato2007-2010/2008/lei/l11892.htm)
+- [Lei do SINAES — 10.861/2004](https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2004/lei/l10.861.htm)
+- [Lei CAPES/CNPq — 11.502/2007](https://www.planalto.gov.br/ccivil_03/_ato2007-2010/2007/lei/l11502.htm)
+- [Decreto 1.191/1994 — dirigentes federais](https://www.planalto.gov.br/ccivil_03/decreto/1994/d1191.htm)
+- [e-MEC](https://emec.mec.gov.br)
+
+**Nota:** nomes, siglas, sedes e sites seguem e-MEC/portais institucionais na data de atualização. Se algo divergir, abra uma issue.
+
+## Licença
+
+MIT — veja [LICENSE](LICENSE).

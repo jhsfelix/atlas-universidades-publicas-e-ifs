@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atlas das Universidades Públicas e dos Institutos Federais</title>
+  <meta name="description" content="Roda interativa das relações de governança das universidades públicas brasileiras — federais, estaduais e municipais — e dos Institutos Federais: quem mantém, supervisiona, avalia e fomenta, com a norma legal de cada relação.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="container topo-in">
+      <div class="marca">
+        <span class="marca-quadrado" aria-hidden="true"></span>
+        <div>
+          <h1>Atlas das Universidades Públicas <span class="e">e</span> dos Institutos Federais</h1>
+          <p class="sub">Quem mantém, supervisiona, avalia e fomenta cada instituição pública — e com qual norma legal.</p>
+        </div>
+      </div>
+      <div class="topo-acao">
+        <p class="stats">
+          <strong id="stat-inst">—</strong> instituições ·
+          <strong id="stat-nos">—</strong> nós ·
+          <strong id="stat-rel">—</strong> relações<br>
+          atualizado em <span id="stat-data">—</span>
+        </p>
+        <button id="btn-tema" type="button" aria-label="Ativar tema escuro">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="ferramentas" aria-label="Busca e filtros">
+      <div class="ferramentas-linha">
+        <div class="busca-wrap">
+          <input id="busca" type="search" placeholder="Buscar por sigla, nome, UF ou cidade..." autocomplete="off" aria-label="Buscar instituição">
+          <ul id="resultados" hidden></ul>
+        </div>
+        <label class="chk"><input type="checkbox" name="tipo" value="federal" checked> Federais</label>
+        <label class="chk"><input type="checkbox" name="tipo" value="instituto-federal" checked> IFs</label>
+        <label class="chk"><input type="checkbox" name="tipo" value="estadual" checked> Estaduais</label>
+        <label class="chk"><input type="checkbox" name="tipo" value="municipal" checked> Municipais</label>
+        <select id="filtro-uf" class="filtro-uf" aria-label="Filtrar por estado">
+          <option value="todas">Todos os estados</option>
+        </select>
+        <button id="btn-reset" type="button">Limpar</button>
+        <span id="contagem" aria-live="polite"></span>
+      </div>
+      <div class="lenda">
+        <div class="lenda-grupo">
+          <span class="lenda-tit">Instituições</span>
+          <span class="leg-item"><span class="leg-ponto leg-federal"></span>Federais</span>
+          <span class="leg-item"><span class="leg-ponto leg-if"></span>IFs</span>
+          <span class="leg-item"><span class="leg-ponto leg-estadual"></span>Estaduais</span>
+          <span class="leg-item"><span class="leg-ponto leg-municipal"></span>Municipais (em levantamento)</span>
+        </div>
+        <div class="lenda-grupo">
+          <span class="lenda-tit">Relações</span>
+          <span class="leg-item"><span class="leg-linha"></span>mantém / supervisiona</span>
+          <span class="leg-item"><span class="leg-linha avalia"></span>avalia</span>
+          <span class="leg-item"><span class="leg-linha fomenta"></span>fomenta</span>
+          <span class="leg-item"><span class="leg-linha integra"></span>integra</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="mapa" aria-label="Roda de relações">
+      <div class="roda-wrap" id="roda-wrap">
+        <svg id="roda" viewBox="0 0 1100 1100" role="img" aria-label="Roda de governança do ensino superior público brasileiro">
+          <title>Roda de governança: passe o mouse ou toque em um nó para ver as relações; clique para abrir a ficha.</title>
+        </svg>
+        <div class="tip" id="tip" hidden></div>
+      </div>
+      <p class="dica">Passe o mouse (ou toque) em um ponto para destacar as relações; clique para abrir a ficha completa.</p>
+    </section>
+
+    <section id="sobre" class="sobre">
+      <div>
+        <h2>Como ler este atlas</h2>
+        <p>No centro, o sistema. No anel de governança, quem manda: a União (por meio do MEC), os Estados e o DF, os Municípios, os órgãos que avaliam e fomentam — INEP, CAPES e CNPq — e as associações de reitores.</p>
+        <p>No anel externo, cada instituição, agrupada por tipo e por estado. Cada linha liga uma instituição a quem mantém, supervisiona, avalia ou fomenta — e cita a norma que funda a relação: a Constituição (art. 211), a LDB (Lei 9.394/1996, arts. 9º, 10 e 11), a Lei dos Institutos Federais (11.892/2008), a Lei do SINAES (10.861/2004) e a Lei CAPES/CNPq (11.502/2007).</p>
+        <p class="nota">Reitores de universidades federais e de Institutos Federais são indicados pelo MEC e nomeados pelo Presidente da República (Decreto nº 1.191/1994). As relações derivam do tipo de cada instituição: ao registrar uma instituição nova no arquivo de dados, as relações correspondentes são criadas automaticamente.</p>
+      </div>
+      <div>
+        <h2>Fontes e dados</h2>
+        <p>Dados estruturais e de governança: nomes oficiais, siglas, sedes, sites e normas. Este atlas não publica, por enquanto, dados de orçamento e recursos — correções e inclusões são bem-vindas via issues.</p>
+        <ul>
+          <li><a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm" target="_blank" rel="noopener">CF/1988, art. 211 — Planalto</a></li>
+          <li><a href="https://www.planalto.gov.br/ccivil_03/leis/l9394.htm" target="_blank" rel="noopener">LDB — Lei 9.394/1996 — Planalto</a></li>
+          <li><a href="https://www.planalto.gov.br/ccivil_03/_ato2007-2010/2008/lei/l11892.htm" target="_blank" rel="noopener">Lei dos IFs — 11.892/2008 — Planalto</a></li>
+          <li><a href="https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2004/lei/l10.861.htm" target="_blank" rel="noopener">Lei do SINAES — 10.861/2004 — Planalto</a></li>
+          <li><a href="https://www.planalto.gov.br/ccivil_03/_ato2007-2010/2007/lei/l11502.htm" target="_blank" rel="noopener">Lei CAPES/CNPq — 11.502/2007 — Planalto</a></li>
+          <li><a href="https://www.planalto.gov.br/ccivil_03/decreto/1994/d1191.htm" target="_blank" rel="noopener">Decreto 1.191/1994 — dirigentes federais — Planalto</a></li>
+          <li><a href="https://emec.mec.gov.br" target="_blank" rel="noopener">e-MEC — registro de instituições</a></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="container rodape">
+    <span>Modelo inspirado no <a href="https://atlasdarepublica.org" target="_blank" rel="noopener">Atlas da República</a>.</span>
+    <span>Licença MIT · <a id="link-repo" href="#sobre">repositório</a> · <a id="link-issues" href="#sobre">abrir issue para corrigir ou incluir dados</a></span>
+  </footer>
+
+  <aside id="ficha" class="ficha" hidden aria-live="polite" aria-label="Ficha da instituição">
+    <button id="ficha-fechar" type="button">Fechar</button>
+    <div id="ficha-conteudo"></div>
+  </aside>
+
+  <script src="data/atlas.js"></script>
+  <script src="js/graph.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
