@@ -148,6 +148,45 @@ h1 .e { font-style: italic; font-weight: 500; color: var(--accent); }
 .ficha-orc td.v { text-align: right; padding: 3px 0; font-variant-numeric: tabular-nums; font-weight: 600; }
 .ficha-fonte { margin: 0; font-size: .78rem; color: var(--muted); }
 .ficha-fonte a { color: inherit; border-bottom: 1px solid currentColor; text-decoration: none; }
+#btn-orc { border: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-size: .78rem; padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+#btn-orc strong { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
+#btn-orc:hover { border-color: var(--ink); }
+.orc-rank { color: var(--muted); font-size: .8rem; margin: 4px 0 10px; }
+.orc-exec { padding-top: 4px; }
+.orc-exec-bar { display: flex; height: 14px; border-radius: 4px; overflow: hidden; border: 1px solid var(--line); background: repeating-linear-gradient(45deg, var(--line), var(--line) 3px, transparent 3px, transparent 7px); }
+.orc-exec-bar .seg { display: block; height: 100%; }
+.seg-pago { background: var(--accent); }
+.seg-liq { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+.seg-emp { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.orc-exec-leg { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .7rem; color: var(--muted); margin-top: 6px; }
+.orc-exec-leg i, .orc-leg i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 4px; }
+.pt-pago { background: var(--accent); }
+.pt-liq { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+.pt-emp { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.pt-resto { background: repeating-linear-gradient(45deg, var(--line), var(--line) 2px, transparent 2px, transparent 5px); border: 1px solid var(--line); }
+.c-bar { height: 5px; background: var(--line); border-radius: 3px; margin-top: 5px; overflow: hidden; }
+.c-bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.c-bar .bar-outros { background: var(--muted); }
+.orc-compo { display: grid; grid-template-columns: 1fr auto; gap: 1px 10px; padding: 6px 0 7px; border-bottom: 1px solid var(--line); align-items: baseline; }
+.orc-compo .c-k { font-size: .85rem; }
+.orc-compo .c-v { font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+.orc-compo .c-bar { grid-column: 1 / -1; margin-top: 2px; }
+.orc-acoes { list-style: none; margin: 0; padding: 0; }
+.orc-acoes li { padding: 7px 0 8px; border-bottom: 1px solid var(--line); }
+.orc-acoes .linha, .orc-lista .linha { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.orc-acoes .a-nome { font-size: .82rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.orc-acoes .a-v { font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.orc-big { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.02em; margin: 8px 0 2px; }
+.orc-sub { color: var(--muted); font-size: .8rem; margin: 0 0 6px; }
+.orc-stack { display: flex; height: 18px; border-radius: 4px; overflow: hidden; border: 1px solid var(--line); margin: 8px 0; }
+.orc-stack span { display: block; height: 100%; }
+.orc-leg { display: flex; flex-direction: column; gap: 4px; font-size: .78rem; color: var(--ink); margin-bottom: 4px; }
+.orc-leg i { vertical-align: -1px; }
+.h3-min { margin-top: 14px; }
+.orc-lista { list-style: none; margin: 0; padding: 0; }
+.orc-lista li { padding: 6px 0 7px; }
+.orc-lista .l-nome { font-size: .82rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.orc-lista .l-v { font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .rel-nome { color: var(--accent); font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; }
 .rel-norma { color: var(--muted); font-size: .78rem; flex-basis: 100%; }
 .rel-resumo { color: var(--muted); font-size: .85rem; }

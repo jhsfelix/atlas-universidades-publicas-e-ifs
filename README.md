@@ -17,7 +17,8 @@ Cada relação cita a norma que a funda (Constituição art. 211; LDB arts. 9º,
 Abra `index.html` — não há build nem dependências. Dados em `data/atlas.js`, orçamento em `data/orcamento.js`, visualização em `js/graph.js` (SVG puro, sem bibliotecas) e interface em `js/app.js`.
 
 - Passe o mouse (ou toque) em um ponto: as relações daquela instituição se destacam
-- Clique: abre a ficha com nome oficial, UF, sede, site, todas as relações com as normas citadas — e, nas IES federais, o orçamento (LOA e execução, exercícios 2025 e 2026)
+- Clique: abre a ficha com nome oficial, UF, sede, site, todas as relações com as normas citadas — e, nas IES federais, o orçamento (LOA e execução, exercícios 2025 e 2026), composição por grupo de despesa (pessoal, correntes, investimentos) e principais ações específicas
+- Clique em **Orçamento** no topo: resumo do sistema — total, federais × IFs, composição por grupo de despesa e maiores/menores dotações
 - Filtre por tipo e estado, ou busque por sigla, nome, UF e cidade
 
 ## Como contribuir
