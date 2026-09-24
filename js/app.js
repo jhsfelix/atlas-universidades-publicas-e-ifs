@@ -22,6 +22,37 @@
     integra: "integra"
   };
 
+  const ORC = window.ORCAMENTO || null;
+  const ORC_CHAVES = [
+    { k: "loa", r: "Dotação (LOA)" },
+    { k: "autorizado", r: "Autorizado" },
+    { k: "empenhado", r: "Empenhado" },
+    { k: "liquidado", r: "Liquidado" },
+    { k: "pago", r: "Pago" }
+  ];
+
+  function fmtCompact(v) {
+    if (v >= 1e9) return "R$ " + (v / 1e9).toFixed(2).replace(".", ",") + " bi";
+    if (v >= 1e6) return "R$ " + (v / 1e6).toFixed(1).replace(".", ",") + " mi";
+    return "R$ " + v.toLocaleString("pt-BR");
+  }
+
+  function renderOrc(orc) {
+    let html = "<h3>Orçamento (LOA)</h3><table class='ficha-orc'>";
+    for (const ano of ORC.meta.exercicios) {
+      const v = orc[ano];
+      if (!v) continue;
+      html += "<tr><td colspan='2' class='orc-ano'>" + esc(ano) + (ano === "2026" ? " (em execução)" : "") + "</td></tr>";
+      for (const c of ORC_CHAVES) {
+        const val = v[c.k];
+        if (val == null) continue;
+        html += "<tr><td class='k'>" + c.r + "</td><td class='v' title='" + val.toLocaleString("pt-BR") + "'>" + fmtCompact(val) + "</td></tr>";
+      }
+    }
+    html += "</table><p class='ficha-fonte'>Fonte: <a href='" + esc(ORC.meta.url) + "' target='_blank' rel='noopener'>" + esc(ORC.meta.fonte) + "</a> · dados abertos. Exclui unidades de hospitais universitários (EBSERH).</p>";
+    return html;
+  }
+
   document.getElementById("stat-nos").textContent = A.nodes.length;
   document.getElementById("stat-rel").textContent = R.edges.length;
   const inst = R.institucoes.length;
@@ -149,6 +180,8 @@
       html += "<li><strong>" + esc(origem.label) + "</strong> <span class='rel-nome'>" + (REL_ROTULOS[e.rel] || e.rel) + "</span>" + (e.norm ? "<span class='rel-norma'>" + esc(e.norm) + "</span>" : "") + "</li>";
     }
     html += "</ul>";
+    const orc = ORC && ORC.valores[n.id];
+    if (orc) html += renderOrc(orc);
     return html;
   }
 

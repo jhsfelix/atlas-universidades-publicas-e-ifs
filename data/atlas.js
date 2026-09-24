@@ -4,7 +4,7 @@ window.ATLAS = {
     subtitulo: "Quem mantém, supervisiona, avalia e fomenta cada universidade pública federal, estadual e municipal, e cada Instituto Federal do Brasil",
     atualizado: "2026-09-24",
     repo: "https://github.com/jhsfelix/atlas-universidades-publicas-e-ifs",
-    notaFonte: "Nomes, siglas, sedes e sites conforme e-MEC/MEC e portais institucionais. Normas conforme textos oficiais do Planalto."
+    notaFonte: "Nomes, siglas, sedes e sites conforme e-MEC/MEC e portais institucionais. Normas conforme textos oficiais do Planalto. Orçamento: dados abertos da SOF/SIOP."
   },
   tipos: {
     "federal": { rotulo: "Universidade federal" },
@@ -16,7 +16,7 @@ window.ATLAS = {
     "centro": { rotulo: "Sistema" }
   },
   nodes: [
-    { id: "brasil", label: "Brasil", nome: "Ensino superior público brasileiro", tipo: "centro", desc: "Sistema organizado de forma federativa pela União, pelos Estados e pelos Municípios (CF/1988, art. 211). Neste atlas: 63 universidades federais, 38 Institutos Federais e 35 universidades estaduais mapeadas." },
+    { id: "brasil", label: "Brasil", nome: "Ensino superior público brasileiro", tipo: "centro", desc: "Sistema organizado de forma federativa pela União, pelos Estados e pelos Municípios (CF/1988, art. 211). Neste atlas: 69 universidades federais, 38 Institutos Federais e 36 universidades estaduais mapeadas." },
     { id: "uniao", label: "União", nome: "União — ente federativo", tipo: "governo", desc: "Mantenedora das universidades federais e dos Institutos Federais (CF/1988, art. 211, § 1º).", site: "https://www.gov.br/planalto" },
     { id: "mec", label: "MEC", nome: "Ministério da Educação", tipo: "governo", desc: "Supervisiona as universidades federais e os Institutos Federais e exerce a política nacional de educação superior (LDB, art. 9º).", site: "https://www.gov.br/mec" },
     { id: "inep", label: "INEP", nome: "Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira", tipo: "governo", desc: "Executa o SINAES: avaliação de instituições e cursos de todo o sistema (Lei 10.861/2004), além do Censo da Educação Superior.", site: "https://www.gov.br/inep" },
@@ -34,6 +34,7 @@ window.ATLAS = {
     { id: "ufam", label: "UFAM", nome: "Universidade Federal do Amazonas", tipo: "federal", uf: "AM", cidade: "Manaus", site: "https://ufam.edu.br" },
     { id: "ufap", label: "UFAP", nome: "Universidade Federal do Amapá", tipo: "federal", uf: "AP", cidade: "Macapá", site: "https://www.unifap.br" },
     { id: "ufba", label: "UFBA", nome: "Universidade Federal da Bahia", tipo: "federal", uf: "BA", cidade: "Salvador", site: "https://ufba.br" },
+    { id: "ufob", label: "UFOB", nome: "Universidade Federal do Oeste da Bahia", tipo: "federal", uf: "BA", cidade: "Barreiras", site: "https://www.ufob.edu.br" },
     { id: "ufrb", label: "UFRB", nome: "Universidade Federal do Recôncavo da Bahia", tipo: "federal", uf: "BA", cidade: "Cruz das Almas", site: "https://www.ufrb.edu.br" },
     { id: "ufsb", label: "UFSB", nome: "Universidade Federal do Sul da Bahia", tipo: "federal", uf: "BA", cidade: "Porto Seguro", site: "https://ufsb.edu.br" },
     { id: "ufc", label: "UFC", nome: "Universidade Federal do Ceará", tipo: "federal", uf: "CE", cidade: "Fortaleza", site: "https://www.ufc.br" },
@@ -42,6 +43,8 @@ window.ATLAS = {
     { id: "unb", label: "UnB", nome: "Universidade de Brasília", tipo: "federal", uf: "DF", cidade: "Brasília", site: "https://www.unb.br" },
     { id: "ufes", label: "UFES", nome: "Universidade Federal do Espírito Santo", tipo: "federal", uf: "ES", cidade: "Vitória", site: "https://ufes.br" },
     { id: "ufg", label: "UFG", nome: "Universidade Federal de Goiás", tipo: "federal", uf: "GO", cidade: "Goiânia", site: "https://ufg.br" },
+    { id: "ufcat", label: "UFCAT", nome: "Universidade Federal de Catalão", tipo: "federal", uf: "GO", cidade: "Catalão", site: "https://ufcat.edu.br" },
+    { id: "ufj", label: "UFJ", nome: "Universidade Federal de Jataí", tipo: "federal", uf: "GO", cidade: "Jataí", site: "https://ufj.edu.br" },
     { id: "ufma", label: "UFMA", nome: "Universidade Federal do Maranhão", tipo: "federal", uf: "MA", cidade: "São Luís", site: "https://portal.ufma.br" },
     { id: "ufmg", label: "UFMG", nome: "Universidade Federal de Minas Gerais", tipo: "federal", uf: "MG", cidade: "Belo Horizonte", site: "https://ufmg.br" },
     { id: "ufjf", label: "UFJF", nome: "Universidade Federal de Juiz de Fora", tipo: "federal", uf: "MG", cidade: "Juiz de Fora", site: "https://www2.ufjf.br" },
@@ -57,6 +60,7 @@ window.ATLAS = {
     { id: "ufms", label: "UFMS", nome: "Universidade Federal de Mato Grosso do Sul", tipo: "federal", uf: "MS", cidade: "Campo Grande", site: "https://ufms.br" },
     { id: "ufgd", label: "UFGD", nome: "Universidade Federal da Grande Dourados", tipo: "federal", uf: "MS", cidade: "Dourados", site: "https://www.ufgd.edu.br" },
     { id: "ufmt", label: "UFMT", nome: "Universidade Federal de Mato Grosso", tipo: "federal", uf: "MT", cidade: "Cuiabá", site: "https://www.ufmt.br" },
+    { id: "ufr", label: "UFR", nome: "Universidade Federal de Rondonópolis", tipo: "federal", uf: "MT", cidade: "Rondonópolis", site: "https://www.ufr.edu.br" },
     { id: "ufpa", label: "UFPA", nome: "Universidade Federal do Pará", tipo: "federal", uf: "PA", cidade: "Belém", site: "https://ufpa.br" },
     { id: "ufra", label: "UFRA", nome: "Universidade Federal Rural da Amazônia", tipo: "federal", uf: "PA", cidade: "Belém", site: "https://www.ufra.edu.br" },
     { id: "ufopa", label: "UFOPA", nome: "Universidade Federal do Oeste do Pará", tipo: "federal", uf: "PA", cidade: "Santarém", site: "https://ufopa.edu.br" },
@@ -64,6 +68,7 @@ window.ATLAS = {
     { id: "ufpb", label: "UFPB", nome: "Universidade Federal da Paraíba", tipo: "federal", uf: "PB", cidade: "João Pessoa", site: "https://ufpb.br" },
     { id: "ufcg", label: "UFCG", nome: "Universidade Federal de Campina Grande", tipo: "federal", uf: "PB", cidade: "Campina Grande", site: "https://ufcg.edu.br" },
     { id: "ufpe", label: "UFPE", nome: "Universidade Federal de Pernambuco", tipo: "federal", uf: "PE", cidade: "Recife", site: "https://www.ufpe.br" },
+    { id: "ufape", label: "UFAPE", nome: "Universidade Federal do Agreste de Pernambuco", tipo: "federal", uf: "PE", cidade: "Garanhuns", site: "https://ufape.edu.br" },
     { id: "ufrpe", label: "UFRPE", nome: "Universidade Federal Rural de Pernambuco", tipo: "federal", uf: "PE", cidade: "Recife", site: "https://ufrpe.br" },
     { id: "univasf", label: "UNIVASF", nome: "Universidade Federal do Vale do São Francisco", tipo: "federal", uf: "PE", cidade: "Petrolina", site: "https://univasf.edu.br" },
     { id: "ufpi", label: "UFPI", nome: "Universidade Federal do Piauí", tipo: "federal", uf: "PI", cidade: "Teresina", site: "https://ufpi.edu.br" },
@@ -92,6 +97,7 @@ window.ATLAS = {
     { id: "ufabc", label: "UFABC", nome: "Universidade Federal do ABC", tipo: "federal", uf: "SP", cidade: "Santo André", site: "https://www.ufabc.edu.br" },
     { id: "ufscar", label: "UFSCar", nome: "Universidade Federal de São Carlos", tipo: "federal", uf: "SP", cidade: "São Carlos", site: "https://www.ufscar.br" },
     { id: "uft", label: "UFT", nome: "Universidade Federal do Tocantins", tipo: "federal", uf: "TO", cidade: "Palmas", site: "https://www.uft.edu.br" },
+    { id: "ufnt", label: "UFNT", nome: "Universidade Federal do Norte do Tocantins", tipo: "federal", uf: "TO", cidade: "Araguaína", site: "https://www.ufnt.edu.br" },
 
     { id: "ifac", label: "IFAC", nome: "Instituto Federal do Acre", tipo: "instituto-federal", uf: "AC", cidade: "Rio Branco", site: "https://portal.ifac.edu.br" },
     { id: "ifa", label: "IFA", nome: "Instituto Federal de Alagoas", tipo: "instituto-federal", uf: "AL", cidade: "Maceió", site: "https://www.ifal.edu.br" },

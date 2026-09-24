@@ -2,9 +2,9 @@
 
 Roda interativa das relações de governança do ensino superior público brasileiro, no modelo do [Atlas da República](https://atlasdarepublica.org/): quem manda em quê, e com qual norma legal.
 
-**O que está mapeado (149 nós, ~690 relações):**
+**O que está mapeado (155 nós, ~720 relações):**
 
-- **63 universidades federais** — supervisionadas pelo MEC, criadas por lei federal (LDB, art. 46)
+- **69 universidades federais** — supervisionadas pelo MEC, criadas por lei federal (LDB, art. 46)
 - **38 Institutos Federais** — supervisionados pelo MEC, criados por lei federal (Lei 11.892/2008)
 - **36 universidades estaduais** — mantidas por lei estadual de criação (LDB, art. 10)
 - **Universidades municipais** — em levantamento: as IES municipais existentes são, em regra, mantidas por fundações de direito privado (ex.: USCS). Nenhuma pública confirmada até a data do atlas
@@ -14,10 +14,10 @@ Cada relação cita a norma que a funda (Constituição art. 211; LDB arts. 9º,
 
 ## Como usar
 
-Abra `index.html` — não há build nem dependências. Dados em `data/atlas.js`, visualização em `js/graph.js` (SVG puro, sem bibliotecas) e interface em `js/app.js`.
+Abra `index.html` — não há build nem dependências. Dados em `data/atlas.js`, orçamento em `data/orcamento.js`, visualização em `js/graph.js` (SVG puro, sem bibliotecas) e interface em `js/app.js`.
 
 - Passe o mouse (ou toque) em um ponto: as relações daquela instituição se destacam
-- Clique: abre a ficha com nome oficial, UF, sede, site e todas as relações com as normas citadas
+- Clique: abre a ficha com nome oficial, UF, sede, site, todas as relações com as normas citadas — e, nas IES federais, o orçamento (LOA e execução, exercícios 2025 e 2026)
 - Filtre por tipo e estado, ou busque por sigla, nome, UF e cidade
 
 ## Como contribuir
@@ -38,6 +38,7 @@ Números de nós e relações derivam automaticamente do tipo da instituição: 
 - [Lei CAPES/CNPq — 11.502/2007](https://www.planalto.gov.br/ccivil_03/_ato2007-2010/2007/lei/l11502.htm)
 - [Decreto 1.191/1994 — dirigentes federais](https://www.planalto.gov.br/ccivil_03/decreto/1994/d1191.htm)
 - [e-MEC](https://emec.mec.gov.br)
+- [SOF/SIOP — dados abertos do orçamento federal](https://orcamento.dados.gov.br/siopdoc/doku.php/acesso_publico:dados_abertos/) — dotações e execução orçamentária das unidades orçamentárias das IES federais (excluídos os hospitais universitários/EBSERH); universidades estaduais não constam por não haver fonte nacional unificada para as LOAs estaduais
 
 **Nota:** nomes, siglas, sedes e sites seguem e-MEC/portais institucionais na data de atualização. Se algo divergir, abra uma issue.
 

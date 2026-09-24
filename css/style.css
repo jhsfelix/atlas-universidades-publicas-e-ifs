@@ -142,6 +142,12 @@ h1 .e { font-style: italic; font-weight: 500; color: var(--accent); }
 .ficha-rels li { padding: 8px 0; border-bottom: 1px solid var(--line); font-size: .88rem; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
 .ficha-rels li:last-child { border-bottom: 0; }
 .ficha-rels strong { font-weight: 700; }
+.ficha-orc { width: 100%; border-collapse: collapse; font-size: .88rem; margin-bottom: 8px; }
+.ficha-orc .orc-ano { padding: 10px 0 2px; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.ficha-orc td.k { color: var(--muted); padding: 3px 0; }
+.ficha-orc td.v { text-align: right; padding: 3px 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+.ficha-fonte { margin: 0; font-size: .78rem; color: var(--muted); }
+.ficha-fonte a { color: inherit; border-bottom: 1px solid currentColor; text-decoration: none; }
 .rel-nome { color: var(--accent); font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; }
 .rel-norma { color: var(--muted); font-size: .78rem; flex-basis: 100%; }
 .rel-resumo { color: var(--muted); font-size: .85rem; }
