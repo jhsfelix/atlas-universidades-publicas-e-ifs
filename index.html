@@ -7,10 +7,28 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <title>Atlas das Universidades Públicas e dos Institutos Federais</title>
   <meta name="description" content="Roda interativa das relações de governança das universidades públicas brasileiras — federais, estaduais e municipais — e dos Institutos Federais: quem mantém, supervisiona, avalia e fomenta, com a norma legal de cada relação.">
+  <link rel="canonical" href="https://atlasuniversidadesifs.org/">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta property="og:site_name" content="Atlas das Universidades Públicas e dos Institutos Federais">
+  <meta property="og:title" content="Atlas das Universidades Públicas e dos Institutos Federais">
+  <meta property="og:description" content="Quem mantém, supervisiona, avalia e fomenta cada universidade pública e Instituto Federal — e com qual norma legal. Dados públicos com fonte: SOF/SIOP, INEP, CAPES, CNPq, IBGE.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://atlasuniversidadesifs.org/">
+  <meta property="og:image" content="https://atlasuniversidadesifs.org/img/og-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Roda de governança do ensino superior público brasileiro — Atlas das Universidades Públicas e dos Institutos Federais">
+  <meta property="og:locale" content="pt_BR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Atlas das Universidades Públicas e dos Institutos Federais">
+  <meta name="twitter:description" content="Quem mantém, supervisiona, avalia e fomenta cada universidade pública e Instituto Federal — e com qual norma legal.">
+  <meta name="twitter:image" content="https://atlasuniversidadesifs.org/img/og-card.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=15af265">
+  <script type="application/ld+json" id="ldjson-website"></script>
+  <script type="application/ld+json" id="ldjson-dataset"></script>
 </head>
 <body>
   <header class="topo">
@@ -260,5 +278,42 @@
   <script src="js/framebust.js?v=15af265"></script>
   <script src="js/graph.js?v=15af265"></script>
   <script src="js/app.js?v=15af265"></script>
+  <script>
+  (function () {
+    'use strict';
+    var URL_SITE = 'https://atlasuniversidadesifs.org/';
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    var ws = {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      'name': 'Atlas das Universidades Públicas e dos Institutos Federais',
+      'alternateName': ['Atlas das Universidades e IFs', 'Atlas Universidades IFs'],
+      'url': URL_SITE,
+      'inLanguage': 'pt-BR',
+      'description': 'Roda interativa das relações de governança do ensino superior público brasileiro — universidades federais, Institutos Federais e universidades estaduais — com a norma legal de cada relação e dados de orçamento com fonte.',
+      'license': 'https://opensource.org/licenses/MIT',
+      'isAccessibleForFree': true,
+      'keywords': 'universidades federais, institutos federais, IFs, ensino superior público, orçamento LOA, gasto por aluno, governança, SIOP, INEP, CAPES, CNPq'
+    };
+    var ds = {
+      '@context': 'https://schema.org',
+      '@type': 'Dataset',
+      'name': 'Atlas das Universidades Públicas e dos Institutos Federais — dados abertos',
+      'description': 'Base de dados do Atlas: 155 nós e ~720 relações de governança do ensino superior público brasileiro, orçamento (LOA e execução 2002–2026) das IES federais, matrículas de graduação (Censo 2024), bolsas CNPq pagas (2023) e pós-graduação stricto sensu (COLSUCUP 2024).',
+      'url': URL_SITE,
+      'sameAs': 'https://github.com/jhsfelix/atlas-universidades-publicas-e-ifs',
+      'license': 'https://opensource.org/licenses/MIT',
+      'isAccessibleForFree': true,
+      'creator': { '@type': 'Person', 'name': 'John H. S. Felix' },
+      'keywords': 'ensino superior público, universidades federais, institutos federais, orçamento, LOA, SIOP, INEP, CAPES, CNPq, IBGE',
+      'spatialCoverage': { '@type': 'Country', 'name': 'Brasil' },
+      'temporalCoverage': '2002/2026'
+    };
+    var e1 = document.getElementById('ldjson-website');
+    var e2 = document.getElementById('ldjson-dataset');
+    if (e1) e1.textContent = JSON.stringify(ws);
+    if (e2) e2.textContent = JSON.stringify(ds);
+  })();
+  </script>
 </body>
 </html>
