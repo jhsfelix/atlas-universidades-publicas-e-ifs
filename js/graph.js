@@ -316,12 +316,16 @@
   let arrastou = false;
   let ultimo = null;
   let pinchDist = 0;
+  let alvoDown = null;
+  let botaoDown = 0;
 
   svg.addEventListener("pointerdown", function (ev) {
     try { svg.setPointerCapture(ev.pointerId); } catch (e) { }
     ponteiros.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     ultimo = { x: ev.clientX, y: ev.clientY };
     arrastou = false;
+    alvoDown = ev.target && ev.target.closest ? ev.target.closest("g.node") : null;
+    botaoDown = ev.button;
     if (ponteiros.size === 2) {
       const pts = Array.from(ponteiros.values());
       pinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
@@ -360,6 +364,15 @@
     if (ponteiros.size === 1) {
       const rest = Array.from(ponteiros.values())[0];
       ultimo = { x: rest.x, y: rest.y };
+    }
+    if (ev.type !== "pointerup" || arrastou || botaoDown !== 0 || ev.button !== 0) return;
+    const g = alvoDown && alvoDown.isConnected ? alvoDown : (ev.target && ev.target.closest ? ev.target.closest("g.node") : null);
+    alvoDown = null;
+    if (g) {
+      if (selected === g.dataset.id) select(null);
+      else select(g.dataset.id);
+    } else {
+      select(null);
     }
   }
   svg.addEventListener("pointerup", solta);
@@ -415,21 +428,8 @@
     hideTip();
   });
 
-  svg.addEventListener("click", function (ev) {
-    if (arrastou) {
-      arrastou = false;
-      return;
-    }
-    const g = ev.target.closest("g.node");
-    if (!g) {
-      select(null);
-      return;
-    }
-    if (selected === g.dataset.id) {
-      select(null);
-      return;
-    }
-    select(g.dataset.id);
+  svg.addEventListener("click", function () {
+    arrastou = false;
   });
 
   function select(id) {
