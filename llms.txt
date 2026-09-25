@@ -10,7 +10,7 @@ O site e uma aplicacao interativa (JavaScript) em pagina unica. Todo o conteudo 
 - [data/matriculas.js](https://github.com/jhsfelix/atlas-universidades-publicas-e-ifs/blob/main/data/matriculas.js): matriculas de graduacao (Censo da Educacao Superior 2024 — INEP).
 - [data/cnpq.js](https://github.com/jhsfelix/atlas-universidades-publicas-e-ifs/blob/main/data/cnpq.js): bolsas CNPq pagas em 2023 por IES (61.832 bolsas).
 - [data/posgrad.js](https://github.com/jhsfelix/atlas-universidades-publicas-e-ifs/blob/main/data/posgrad.js): programas de pos-graduacao stricto sensu 2024 (COLSUCUP) e bolsas CAPES DPB 2025-2026 por IES.
-- [data/estados.js](https://github.com/jsfelix/atlas-universidades-publicas-e-ifs/blob/main/data/estados.js): populacao por UF (Censo 2022 — IBGE).
+- [data/estados.js](https://github.com/jhsfelix/atlas-universidades-publicas-e-ifs/blob/main/data/estados.js): populacao por UF (Censo 2022 — IBGE).
 - [data/criacao.js](https://github.com/jhsfelix/atlas-universidades-publicas-e-ifs/blob/main/data/criacao.js): anos de criacao/fundacao das IES.
 
 ## Como citar
