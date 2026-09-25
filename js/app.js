@@ -216,6 +216,20 @@
     return html;
   }
 
+  function renderPnaes(n) {
+    if (n.tipo !== "federal" && n.tipo !== "instituto-federal" && n.tipo !== "estadual") return "";
+    let html = "<h3>Assistência estudantil (PNAES)</h3>";
+    const areas = "moradia estudantil; alimentação; transporte; atenção à saúde; inclusão digital; cultura; esporte; creche; apoio pedagógico; e acesso, participação e aprendizagem de estudantes com deficiência, transtornos globais do desenvolvimento e altas habilidades";
+    if (n.tipo === "federal" || n.tipo === "instituto-federal") {
+      html += "<div class='ficha-desc'><p>Como instituição federal, a " + esc(n.label) + " executa a Política Nacional de Assistência Estudantil (Decreto 7.234/2010), que cobre: " + areas + ".</p><p>Cada instituição define os próprios valores, critérios e formatos dos auxílios (alimentação, moradia, transporte e demais áreas) — não há tabela nacional única. Os pedidos são feitos no setor de assistência estudantil da instituição.</p></div>";
+      html += "<p class='ficha-fonte'>Fonte: <a href='https://www.planalto.gov.br/ccivil_03/_ato2007-2010/2010/decreto/d7234.htm' target='_blank' rel='noopener'>Decreto 7.234/2010 — PNAES</a> · <a href='" + esc(n.site || "https://www.gov.br/mec/pt-br/pnaes") + "' target='_blank' rel='noopener'>" + esc(n.label) + "</a> · <a href='https://www.gov.br/mec/pt-br/pnaes' target='_blank' rel='noopener'>MEC/PNAES</a>.</p>";
+    } else {
+      html += "<div class='ficha-desc'><p>Universidade estadual: a PNAES federal (Decreto 7.234/2010) aplica-se a instituições federais; o estado mantém programas próprios de assistência estudantil — moradia, alimentação, transporte e apoio ao estudante — definidos e executados pelo governo estadual e pela própria universidade.</p></div>";
+      html += "<p class='ficha-fonte'>Fonte: <a href='" + esc(n.site || "#") + "' target='_blank' rel='noopener'>" + esc(n.label) + "</a> — procure o setor de assistência estudantil.</p>";
+    }
+    return html;
+  }
+
   function renderGnd(id) {
     const gs = ORCD.gnd["2026"][id];
     if (!gs || !gs.length) return "";
@@ -621,6 +635,7 @@
     if (orc) html += renderOrc(orc, n);
     html += renderPos(n);
     html += renderCnpq(n);
+    html += renderPnaes(n);
     return html;
   }
 
@@ -1072,6 +1087,7 @@
       html += "<p><strong>Fundação</strong> — ano de criação registrado no arquivo estrutural do atlas.</p>";
       if (PG) html += "<p><strong>Pós-graduação</strong> — programas stricto sensu em funcionamento e nota CAPES da avaliação 2024 (COLSUCUP); bolsas de mestrado, doutorado e pós-doutorado vigentes contadas dos bolsistas da Diretoria de Programas e Bolsas no País (2025-2026). Programas privados não aparecem: o atlas mapeia só instituições públicas. As bolsas de iniciação científica constam na seção Pesquisa (CNPq), logo abaixo.</p>";
       if (CNQ) html += "<p><strong>Pesquisa (CNPq)</strong> — bolsas e auxílios pagos pelo CNPq em 2023, contadas por processo pago no ano (não por vigência): iniciação científica (graduação), IC Júnior (ensino médio), iniciação tecnológica, mestrado, doutorado, produtividade em pesquisa e pós-doutorado. A soma não equivale a bolsistas ativos.</p>";
+      html += "<p><strong>Assistência estudantil (PNAES)</strong> — política definida pelo Decreto 7.234/2010 para instituições federais, com dez áreas (moradia, alimentação, transporte, saúde, inclusão digital, cultura, esporte, creche, apoio pedagógico e acessibilidade). Não há base nacional unificada de execução por instituição: cada universidade e IF define seus próprios valores e critérios, por isso o atlas não exibe valores por IES — apenas o quadro legal e os canais corretos.</p>";
       html += "<p>Todo número mostrado tem a fonte ao lado. Erros podem ser corrigidos via issue no GitHub.</p></div>";
       abreVista("Metodologia", html);
     },
