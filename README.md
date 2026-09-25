@@ -14,15 +14,15 @@ Cada relação cita a norma que a funda (Constituição art. 211; LDB arts. 9º,
 
 ## Como usar
 
-Abra `index.html` — não há build nem dependências. Dados em `data/atlas.js`, orçamento em `data/orcamento.js` (mais `orcamento-despesas.js`, `orcamento-execucao.js` e `orcamento-historico.js`), estados em `data/estados.js` (população do Censo 2022 — IBGE), criação em `data/criacao.js` (anos de fundação/criação), visualização em `js/graph.js` (SVG puro, sem bibliotecas) e interface em `js/app.js`.
+Abra `index.html` — não há build nem dependências. Dados em `data/atlas.js`, orçamento em `data/orcamento.js` (mais `orcamento-despesas.js`, `orcamento-execucao.js` e `orcamento-historico.js`), estados em `data/estados.js` (população do Censo 2022 — IBGE), criação em `data/criacao.js` (anos de fundação/criação), matrículas em `data/matriculas.js` (Censo da Educação Superior 2024 — INEP), visualização em `js/graph.js` (SVG puro, sem bibliotecas) e interface em `js/app.js`.
 
 - Passe o mouse (ou toque) em um ponto: as relações daquela instituição se destacam; role para aproximar e arraste para navegar (mouse, trackpad ou toque)
-- Clique: abre a ficha com nome oficial, UF, sede, site (com botões "copiar link", "imprimir / salvar PDF" e "comparar"), todas as relações com as normas citadas — e, nas IES federais, o orçamento (LOA e execução, exercícios 2025 e 2026), composição por grupo de despesa (pessoal, correntes, investimentos), principais ações específicas, para onde foi o empenho por elemento de despesa e a evolução do orçamento 2019–2026
-- Clique em **Orçamento** no topo: resumo do sistema — total, federais × IFs, composição por grupo de despesa, evolução 2019–2026, maiores/menores dotações, orçamento **per capita por estado** (Censo 2022), **interiorização** (quanto fica fora das capitais) e a linha do tempo de **fundação** das IES
+- Clique: abre a ficha com nome oficial, UF, sede, site (com botões "copiar link", "imprimir / salvar PDF" e "comparar"), todas as relações com as normas citadas — e, nas IES federais, o orçamento (LOA e execução, exercícios 2025 e 2026), gasto por aluno (LOA ÷ alunos de graduação), composição por grupo de despesa (pessoal, correntes, investimentos), principais ações específicas, para onde foi o empenho por elemento de despesa e a evolução do orçamento 2019–2026
+- Clique em **Orçamento** no topo: resumo do sistema — total, federais × IFs, composição por grupo de despesa, evolução 2019–2026, maiores/menores dotações, orçamento **per capita por estado** (Censo 2022), **interiorização** (quanto fica fora das capitais), **gasto por aluno** (LOA ÷ matrículas de graduação — Censo 2024/INEP) e a linha do tempo de **fundação** das IES
 - **Estados**: mapa em grade de bolhas por UF — tamanho = número de IES públicas, cor = orçamento federal; cada estado mostra também o orçamento por habitante; clique para filtrar a roda
 - **Entenda a roda**: tour guiado em 6 passos pela estrutura de governança
 - Marque **Tamanho = orçamento** para que o diâmetro de cada IES federal/IF reflita sua dotação; use `+`, `−` e o botão de restaurar para controlar o zoom
-- **Comparar**: marque duas IES com o botão "comparar" nas fichas e veja lado a lado orçamento, rank, composição por grupo de despesa e evolução
+- **Comparar**: marque duas IES com o botão "comparar" nas fichas e veja lado a lado orçamento, rank, alunos e gasto por aluno, composição por grupo de despesa e evolução
 - Filtre por tipo e estado, ou busque por sigla, nome, UF e cidade (`/` foca a busca; setas e Enter navegam nos resultados)
 - Toda ficha tem um link direto: `?id=ufmg` etc. abre o atlas já com a ficha aberta
 
@@ -45,6 +45,7 @@ Números de nós e relações derivam automaticamente do tipo da instituição: 
 - [Decreto 1.191/1994 — dirigentes federais](https://www.planalto.gov.br/ccivil_03/decreto/1994/d1191.htm)
 - [e-MEC](https://emec.mec.gov.br)
 - [SOF/SIOP — dados abertos do orçamento federal](https://orcamento.dados.gov.br/siopdoc/doku.php/acesso_publico:dados_abertos/) — dotações e execução orçamentária das unidades orçamentárias das IES federais (excluídos os hospitais universitários/EBSERH); universidades estaduais não constam por não haver fonte nacional unificada para as LOAs estaduais
+- [Censo da Educação Superior — INEP](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-superior) — matrículas de graduação das IES federais (rodada 2024); IFs atendem também ensino médio e técnico, que não entram na conta do gasto por aluno
 
 **Nota:** nomes, siglas, sedes e sites seguem e-MEC/portais institucionais na data de atualização. Se algo divergir, abra uma issue.
 

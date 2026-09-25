@@ -28,6 +28,7 @@
   const ORCH = window.ORC_HIST || null;
   const EST = window.ESTADOS || null;
   const CRIACAO = window.CRIACAO || null;
+  const MAT = window.MATRICULAS || null;
   const ORC_CHAVES = [
     { k: "loa", r: "Dotação (LOA)" },
     { k: "autorizado", r: "Autorizado" },
@@ -125,6 +126,18 @@
       porTipo[tipo].forEach(function (n, i) { RANKS.set(n.id, { pos: i + 1, total: porTipo[tipo].length }); });
     }
     return RANKS;
+  }
+
+  let RANKS_AL = null;
+  function ranksAluno() {
+    if (RANKS_AL) return RANKS_AL;
+    RANKS_AL = new Map();
+    if (!ORC || !MAT) return RANKS_AL;
+    const ls = R.institucoes.filter(function (n) { return ORC.valores[n.id] && MAT.mat[n.id]; })
+      .map(function (n) { return { id: n.id, pa: ORC.valores[n.id]["2026"].loa / MAT.mat[n.id] }; })
+      .sort(function (a, b) { return b.pa - a.pa; });
+    ls.forEach(function (x, i) { RANKS_AL.set(x.id, { pos: i + 1, total: ls.length }); });
+    return RANKS_AL;
   }
 
   function renderGnd(id) {
@@ -227,6 +240,11 @@
     const rank = ranks().get(n.id);
     let html = "<h3>Orçamento (LOA)</h3>";
     if (rank) html += "<p class='orc-rank'>" + fmtCompact(orc["2026"].loa) + " em 2026 · " + rank.pos + "ª maior dotação entre " + rank.total + " " + rot + "</p>";
+    if (MAT && MAT.mat[n.id] && orc["2026"] && orc["2026"].loa) {
+      const pa = orc["2026"].loa / MAT.mat[n.id];
+      const rA = ranksAluno().get(n.id);
+      html += "<p class='orc-contexto'>Gasto por aluno: R$ " + fmtInt(Math.round(pa)) + (rA ? " · " + rA.pos + "ª de " + rA.total : "") + " · ~" + fmtInt(MAT.mat[n.id]) + " alunos de graduação (Censo 2024/INEP)</p>";
+    }
     if (EST && EST.ufs[n.uf]) {
       const u = agregUf()[n.uf];
       const ufD = EST.ufs[n.uf];
@@ -353,6 +371,20 @@
       }
       html += "</ul>";
       html += "<p class='orc-contexto'>Menor interiorização: " + porInt.slice(-3).map(function (x) { return esc(x.uf) + " (" + x.pctInt.toFixed(0) + "%)"; }).join(", ") + "</p>";
+    }
+
+    if (MAT) {
+      const al = R.institucoes.filter(function (n) { return ORC.valores[n.id] && MAT.mat[n.id]; })
+        .map(function (n) { return { n: n, pa: ORC.valores[n.id]["2026"].loa / MAT.mat[n.id] }; })
+        .sort(function (a, b) { return b.pa - a.pa; });
+      const maxPa = al.length ? al[0].pa : 0;
+      html += "<h3>Gasto por aluno — LOA 2026 ÷ alunos de graduação</h3>";
+      html += "<ul class='orc-lista'>";
+      for (const it of al.slice(0, 5)) {
+        html += "<li><div class='linha'><span class='l-nome'>" + esc(it.n.label) + "</span><span class='l-v'>R$ " + fmtInt(Math.round(it.pa)) + "/aluno</span></div><div class='c-bar'><i style='width:" + (maxPa ? it.pa / maxPa * 100 : 0) + "%;background:var(--accent)'></i></div></li>";
+      }
+      html += "</ul>";
+      html += "<p class='orc-contexto'>Menores: " + al.slice(-3).reverse().map(function (x) { return esc(x.n.label) + " (R$ " + fmtInt(Math.round(x.pa)) + ")"; }).join(", ") + " · matrículas: Censo 2024 (INEP), graduação das IES federais. IFs atendem também ensino médio e técnico (não contados): o gasto por aluno de graduação deles aparece inflado.</p>";
     }
 
     if (CRIACAO) {
@@ -797,6 +829,7 @@
         const rank = ranks().get(id);
         html += "<p class='orc-big'>" + fmtCompact(orc["2026"].loa) + "</p>";
         html += "<p class='orc-sub'>LOA 2026" + (rank ? " · " + rank.pos + "ª de " + rank.total + " " + (n.tipo === "federal" ? "universidades federais" : "Institutos Federais") : "") + "</p>";
+        if (MAT && MAT.mat[id] && orc["2026"] && orc["2026"].loa) html += "<p class='orc-sub'>~" + fmtInt(MAT.mat[id]) + " alunos de graduação (Censo 2024) · R$ " + fmtInt(Math.round(orc["2026"].loa / MAT.mat[id])) + " por aluno</p>";
         html += renderGnd(id);
         if (ORCH && ORCH.valores[id]) html += chartLinha(ORCH.valores[id], ORCH.anos, "Evolução de " + n.label);
       }
