@@ -70,17 +70,31 @@
   function fmtInt(v) { return v.toLocaleString("pt-BR"); }
 
   let UF_AGREG = null;
-  function agregUf() {
-    if (UF_AGREG) return UF_AGREG;
+  const UF_AGREG_ANO = {};
+  function agregUf(ano) {
+    const porAno = ano && ano !== "2026";
+    if (!porAno && UF_AGREG) return UF_AGREG;
+    if (porAno && UF_AGREG_ANO[ano]) return UF_AGREG_ANO[ano];
+    const idx = porAno && ORCH ? ORCH.anos.indexOf(ano) : -1;
     const map = {};
     for (const n of R.institucoes) {
       if (!n.uf || !ORC || !ORC.valores[n.id]) continue;
+      let v = null;
+      if (porAno) {
+        v = ORCH && ORCH.valores[n.id] ? ORCH.valores[n.id][idx] : null;
+      } else {
+        v = ORC.valores[n.id]["2026"].loa;
+      }
+      if (v == null) continue;
       if (!map[n.uf]) map[n.uf] = { loa: 0, cap: 0, count: 0 };
       map[n.uf].count++;
-      const v = ORC.valores[n.id]["2026"].loa;
       map[n.uf].loa += v;
       const capital = EST && EST.ufs[n.uf] ? normaliza(EST.ufs[n.uf].capital) : "";
       if (capital && normaliza(n.cidade) === capital) map[n.uf].cap += v;
+    }
+    if (porAno) {
+      UF_AGREG_ANO[ano] = map;
+      return map;
     }
     UF_AGREG = map;
     return map;
@@ -280,7 +294,7 @@
     return html;
   }
 
-  function chartLinha(vals, anos, titulo) {
+  function chartLinha(vals, anos, titulo, selIdx, clicavel) {
     let max = 0;
     let min = Infinity;
     const idxs = [];
@@ -309,11 +323,22 @@
     for (const i of idxs) {
       pontos += "<circle cx='" + x(i).toFixed(1) + "' cy='" + y(vals[i]).toFixed(1) + "' r='" + raio + "'><title>" + anos[i] + ": " + fmtCompact(vals[i]) + "</title></circle>";
     }
+    let destaque = "";
+    if (typeof selIdx === "number" && selIdx >= 0 && selIdx < anos.length && vals[selIdx] != null) {
+      const cx = x(selIdx).toFixed(1);
+      const cy = y(vals[selIdx]).toFixed(1);
+      const anch = x(selIdx) < 34 ? "start" : (x(selIdx) > 286 ? "end" : "middle");
+      const ty = Math.max(12, y(vals[selIdx]) - 8);
+      destaque = "<line class='hist-sel-linha' x1='" + cx + "' y1='" + (Y0 - 4) + "' x2='" + cx + "' y2='" + Y1 + "'/>" +
+        "<circle class='hist-sel' cx='" + cx + "' cy='" + cy + "' r='4.6'/>" +
+        "<text class='hist-sel-ano' x='" + cx + "' y='" + ty.toFixed(1) + "' text-anchor='" + anch + "'>" + anos[selIdx] + "</text>";
+    }
     const titulos = anos.map(function (a, i) { return a + ": " + (vals[i] == null ? "—" : fmtCompact(vals[i])); }).join(" · ");
-    return "<svg class='hist' viewBox='0 0 320 92' role='img' aria-label='" + esc(titulo || "Evolução do orçamento") + "'><title>" + esc(titulos) + "</title>" +
+    return "<svg class='hist" + (clicavel ? " hist-cli" : "") + "'" + (clicavel ? " data-anos='" + anos.join(",") + "'" : "") + " viewBox='0 0 320 92' role='img' aria-label='" + esc(titulo || "Evolução do orçamento") + "'><title>" + esc(titulos) + "</title>" +
       "<path class='hist-area' d='" + dArea + "'/>" +
       "<path class='hist-linha' d='" + d + "'/>" +
       pontos +
+      destaque +
       "<text class='hist-max' x='" + X0 + "' y='10'>" + fmtCompact(max) + "</text>" +
       "<text class='hist-ano' x='" + X0 + "' y='90'>" + anos[idxs[0]] + "</text>" +
       "<text class='hist-ano' x='" + X1 + "' y='90' text-anchor='end'>" + anos[idxs[idxs.length - 1]] + "</text>" +
@@ -364,74 +389,113 @@
     return html;
   }
 
-  function renderOrcamento() {
-    const tot = ORC.meta.totais;
-    const t26 = tot["2026"];
-    const t25 = tot["2025"];
-    const porTipo = { "federal": 0, "instituto-federal": 0 };
-    const cntPorTipo = { "federal": 0, "instituto-federal": 0 };
-    R.institucoes.forEach(function (n) {
-      const v = ORC.valores[n.id];
-      if (!v || porTipo[n.tipo] == null) return;
-      porTipo[n.tipo] += v["2026"].loa;
-      cntPorTipo[n.tipo]++;
-    });
-    const gnd = {};
-    for (const id of Object.keys(ORCD.gnd["2026"])) {
-      for (const g of ORCD.gnd["2026"][id]) gnd[g[0]] = (gnd[g[0]] || 0) + g[3];
-    }
-    const gndTotal = Object.keys(gnd).reduce(function (s, k) { return s + gnd[k]; }, 0);
-    const gndArr = Object.keys(gnd).map(function (k) { return { k: k, v: gnd[k] }; }).sort(function (a, b) { return b.v - a.v; });
+  let ANO_PAINEL = "2026";
 
-    const lista = R.institucoes.filter(function (n) { return ORC.valores[n.id]; })
-      .map(function (n) { return { n: n, loa: ORC.valores[n.id]["2026"].loa }; })
+  function somaAno(ano) {
+    const i = ORCH.anos.indexOf(ano);
+    const out = { loa: 0, n: 0, porTipo: { "federal": { n: 0, v: 0 }, "instituto-federal": { n: 0, v: 0 } } };
+    if (i < 0) return out;
+    for (const n of R.institucoes) {
+      const arr = ORCH.valores[n.id];
+      const v = arr ? arr[i] : null;
+      if (v == null || out.porTipo[n.tipo] == null) continue;
+      out.loa += v;
+      out.n++;
+      out.porTipo[n.tipo].n++;
+      out.porTipo[n.tipo].v += v;
+    }
+    return out;
+  }
+
+  function renderOrcamento() {
+    const ano = ORCH.anos.indexOf(ANO_PAINEL) >= 0 ? ANO_PAINEL : ORCH.anos[ORCH.anos.length - 1];
+    return "<h2>Orçamento</h2>" +
+      "<div class='orc-ano-sel'><label for='orc-ano-range'>Ano</label>" +
+      "<input id='orc-ano-range' class='orc-ano-range' type='range' min='" + ORCH.anos[0] + "' max='" + ORCH.anos[ORCH.anos.length - 1] + "' step='1' value='" + ano + "' aria-label='Ano do orçamento'>" +
+      "<span class='orc-ano-val' id='orc-ano-val'>" + ano + "</span></div>" +
+      "<div id='orc-ano-conteudo'>" + renderOrcamentoConteudo() + "</div>";
+  }
+
+  function renderOrcamentoConteudo() {
+    const ano = ORCH.anos.indexOf(ANO_PAINEL) >= 0 ? ANO_PAINEL : ORCH.anos[ORCH.anos.length - 1];
+    const idx = ORCH.anos.indexOf(ano);
+    const s = somaAno(ano);
+    const exec = ORC.meta.totais[ano] || null;
+    const anoAnt = String(parseInt(ano, 10) - 1);
+    const idxAnt = ORCH.anos.indexOf(anoAnt);
+    let loaAnt = 0;
+    if (idxAnt >= 0) {
+      for (const id of Object.keys(ORCH.valores)) {
+        const v = ORCH.valores[id][idxAnt];
+        if (v != null) loaAnt += v;
+      }
+    }
+
+    const lista = R.institucoes.filter(function (n) { const a = ORCH.valores[n.id]; return a && a[idx] != null; })
+      .map(function (n) { return { n: n, loa: ORCH.valores[n.id][idx] }; })
       .sort(function (a, b) { return b.loa - a.loa; });
     const max = lista.length ? lista[0].loa : 0;
 
-    const nIes = Object.keys(ORC.valores).length;
-    let html = "<p class='ficha-meta'><span class='badge tipo-federal'>" + nIes + " IES federais</span></p>";
-    html += "<h2>Orçamento</h2>";
-    html += "<p class='orc-big'>" + fmtCompact(t26.loa) + "</p>";
-    const cresc = t25.loa ? (((t26.loa / t25.loa) - 1) * 100).toFixed(0) : "0";
-    html += "<p class='orc-sub'>dotação inicial do LOA 2026 · autorizado: " + fmtCompact(t26.autorizado) + " · LOA 2025: " + fmtCompact(t25.loa) + " (+" + cresc + "%)</p>";
+    let html = "<p class='ficha-meta'><span class='badge tipo-federal'>" + s.n + " IES federais · LOA " + ano + "</span></p>";
+    html += "<p class='orc-big'>" + fmtCompact(s.loa) + "</p>";
+    if (exec) {
+      const cresc = loaAnt ? Math.round(((s.loa / loaAnt) - 1) * 100) : 0;
+      html += "<p class='orc-sub'>dotação inicial do LOA " + ano + " · autorizado: " + fmtCompact(exec.autorizado) + " · LOA " + anoAnt + ": " + fmtCompact(loaAnt) + " (" + (cresc >= 0 ? "+" : "") + cresc + "%)</p>";
+    } else {
+      html += "<p class='orc-sub'>dotação inicial da LOA de " + ano + " · valores nominais (não corrigidos pela inflação)</p>";
+      html += "<p class='orc-contexto'>Para " + ano + ", a fonte pública expõe a dotação inicial da LOA por instituição — sem autorizado, execução (empenhado/liquidado/pago) ou composição por grupo de despesa, que existem para 2025–2026. O gasto por aluno usa matrículas do Censo 2024.</p>";
+    }
 
     html += "<h3>Federais × Institutos Federais</h3>";
-    const totTipo = porTipo["federal"] + porTipo["instituto-federal"];
-    const ufPct = totTipo ? porTipo["federal"] / totTipo * 100 : 0;
+    const totTipo = s.porTipo["federal"].v + s.porTipo["instituto-federal"].v;
+    const ufPct = totTipo ? s.porTipo["federal"].v / totTipo * 100 : 100;
     html += "<div class='orc-stack'><span style='width:" + ufPct + "%;background:var(--c-federal)'></span><span style='width:" + (100 - ufPct) + "%;background:var(--c-if)'></span></div>";
-    html += "<div class='orc-leg'><span><i style='background:var(--c-federal)'></i>" + cntPorTipo["federal"] + " universidades · " + fmtCompact(porTipo["federal"]) + " (" + ufPct.toFixed(0) + "%)</span><span><i style='background:var(--c-if)'></i>" + cntPorTipo["instituto-federal"] + " IFs · " + fmtCompact(porTipo["instituto-federal"]) + " (" + (100 - ufPct).toFixed(0) + "%)</span></div>";
+    if (s.porTipo["instituto-federal"].n > 0) {
+      html += "<div class='orc-leg'><span><i style='background:var(--c-federal)'></i>" + s.porTipo["federal"].n + " universidades · " + fmtCompact(s.porTipo["federal"].v) + " (" + ufPct.toFixed(0) + "%)</span><span><i style='background:var(--c-if)'></i>" + s.porTipo["instituto-federal"].n + " IFs · " + fmtCompact(s.porTipo["instituto-federal"].v) + " (" + (100 - ufPct).toFixed(0) + "%)</span></div>";
+    } else {
+      html += "<div class='orc-leg'><span><i style='background:var(--c-federal)'></i>" + s.porTipo["federal"].n + " universidades · 100%</span></div>";
+      html += "<p class='orc-contexto'>A rede dos Institutos Federais foi criada pela Lei 11.892/2008; dotações próprias dos IFs aparecem a partir de 2009.</p>";
+    }
 
-    html += "<h3>Composição por grupo de despesa (2026)</h3>";
-    html += "<div class='orc-stack'>" + gndArr.map(function (g) { return "<span style='width:" + (g.v / gndTotal * 100) + "%;background:" + (GND_CORES[g.k] || "var(--muted)") + "'></span>"; }).join("") + "</div>";
-    html += "<div class='orc-leg'>" + gndArr.map(function (g) { return "<span><i style='background:" + (GND_CORES[g.k] || "var(--muted)") + "'></i>" + esc(GND_ROTULOS[g.k] || g.k) + " · " + (g.v / gndTotal * 100).toFixed(0) + "% · " + fmtCompact(g.v) + "</span>"; }).join("") + "</div>";
+    if (ORCD && ORCD.gnd[ano]) {
+      const gnd = {};
+      for (const id of Object.keys(ORCD.gnd[ano])) {
+        for (const g of ORCD.gnd[ano][id]) gnd[g[0]] = (gnd[g[0]] || 0) + g[3];
+      }
+      const gndTotal = Object.keys(gnd).reduce(function (s2, k) { return s2 + gnd[k]; }, 0);
+      const gndArr = Object.keys(gnd).map(function (k) { return { k: k, v: gnd[k] }; }).sort(function (a, b) { return b.v - a.v; });
+      html += "<h3>Composição por grupo de despesa (" + ano + ")</h3>";
+      html += "<div class='orc-stack'>" + gndArr.map(function (g) { return "<span style='width:" + (g.v / gndTotal * 100) + "%;background:" + (GND_CORES[g.k] || "var(--muted)") + "'></span>"; }).join("") + "</div>";
+      html += "<div class='orc-leg'>" + gndArr.map(function (g) { return "<span><i style='background:" + (GND_CORES[g.k] || "var(--muted)") + "'></i>" + esc(GND_ROTULOS[g.k] || g.k) + " · " + (g.v / gndTotal * 100).toFixed(0) + "% · " + fmtCompact(g.v) + "</span>"; }).join("") + "</div>";
+    }
 
     if (ORCH) {
       html += "<h3>Evolução " + ORCH.anos[0] + "–" + ORCH.anos[ORCH.anos.length - 1] + " (nominal)</h3>";
       const porAno = ORCH.anos.map(function (a, i) {
-        let s = null;
+        let s2 = null;
         for (const id of Object.keys(ORCH.valores)) {
           const v = ORCH.valores[id][i];
-          if (v != null) s = (s || 0) + v;
+          if (v != null) s2 = (s2 || 0) + v;
         }
-        return s;
+        return s2;
       });
-      html += chartLinha(porAno, ORCH.anos, "Evolução do orçamento das IES federais");
+      html += chartLinha(porAno, ORCH.anos, "Evolução do orçamento das IES federais", idx, true);
       const p0 = porAno.find(function (v) { return v != null; });
       const pF = porAno[porAno.length - 1];
       if (p0 && pF) {
         const a0 = ORCH.anos[porAno.indexOf(p0)];
         const vez = pF / p0;
-        html += "<p class='orc-contexto'>Somando as instituições presentes em cada exercício: de " + fmtCompact(p0) + " (" + a0 + ") para " + fmtCompact(pF) + " (" + ORCH.anos[ORCH.anos.length - 1] + ") — " + (vez >= 1 ? "×" + vez.toFixed(1) : "−" + ((1 - vez) * 100).toFixed(0) + "%") + " em valores nominais. IFs entram como dotação própria a partir de 2009–2010.</p>";
+        html += "<p class='orc-contexto'>Somando as instituições presentes em cada exercício: de " + fmtCompact(p0) + " (" + a0 + ") para " + fmtCompact(pF) + " (" + ORCH.anos[ORCH.anos.length - 1] + ") — " + (vez >= 1 ? "×" + vez.toFixed(1) : "−" + ((1 - vez) * 100).toFixed(0) + "%") + " em valores nominais. IFs entram como dotação própria a partir de 2009–2010. Clique no gráfico para escolher o ano.</p>";
       }
     }
 
     html += "<div class='orc-listas'>";
-    html += "<div><h3 class='h3-min'>Maiores dotações (2026)</h3><ul class='orc-lista'>";
+    html += "<div><h3 class='h3-min'>Maiores dotações (" + ano + ")</h3><ul class='orc-lista'>";
     for (const it of lista.slice(0, 5)) {
       html += "<li><div class='linha'><span class='l-nome'>" + esc(it.n.label) + "</span><span class='l-v'>" + fmtCompact(it.loa) + "</span></div><div class='c-bar'><i style='width:" + (max ? it.loa / max * 100 : 0) + "%;background:var(--c-federal)'></i></div></li>";
     }
     html += "</ul></div>";
-    html += "<div><h3 class='h3-min'>Menores dotações (2026)</h3><ul class='orc-lista'>";
+    html += "<div><h3 class='h3-min'>Menores dotações (" + ano + ")</h3><ul class='orc-lista'>";
     for (const it of lista.slice(-5).reverse()) {
       html += "<li><div class='linha'><span class='l-nome'>" + esc(it.n.label) + "</span><span class='l-v'>" + fmtCompact(it.loa) + "</span></div><div class='c-bar'><i style='width:" + (max ? Math.max(1, it.loa / max * 100) : 0) + "%;background:var(--c-if)'></i></div></li>";
     }
@@ -439,8 +503,8 @@
     html += "</div>";
 
     if (EST) {
-      const ag = agregUf();
-      const porestado = Object.keys(ag).filter(function (uf) { return EST.ufs[uf]; }).map(function (uf) {
+      const ag = agregUf(ano);
+      const porestado = Object.keys(ag).filter(function (uf) { return EST.ufs[uf] && ag[uf].loa > 0; }).map(function (uf) {
         const u = ag[uf];
         return { uf: uf, nome: EST.ufs[uf].nome, pop: EST.ufs[uf].pop, loa: u.loa, pctInt: 100 - u.cap / u.loa * 100, pc: u.loa / EST.ufs[uf].pop };
       });
@@ -448,20 +512,22 @@
       let totCap = 0;
       for (const it of porestado) { totLoa += it.loa; totCap += it.loa - it.pctInt / 100 * it.loa; }
 
-      const porPc = porestado.slice().sort(function (a, b) { return b.pc - a.pc; });
-      const maxPc = porPc.length ? porPc[0].pc : 0;
-      html += "<h3>Per capita — orçamento federal das IES por habitante do estado</h3>";
-      html += "<ul class='orc-lista'>";
-      for (const it of porPc.slice(0, 5)) {
-        html += "<li><div class='linha'><span class='l-nome'>" + esc(it.uf) + " · " + esc(it.nome) + "</span><span class='l-v'>R$ " + fmtInt(Math.round(it.pc)) + "/hab</span></div><div class='c-bar'><i style='width:" + (maxPc ? it.pc / maxPc * 100 : 0) + "%;background:var(--accent)'></i></div></li>";
+      if (ano === "2026") {
+        const porPc = porestado.slice().sort(function (a, b) { return b.pc - a.pc; });
+        const maxPc = porPc.length ? porPc[0].pc : 0;
+        html += "<h3>Per capita — orçamento federal das IES por habitante do estado</h3>";
+        html += "<ul class='orc-lista'>";
+        for (const it of porPc.slice(0, 5)) {
+          html += "<li><div class='linha'><span class='l-nome'>" + esc(it.uf) + " · " + esc(it.nome) + "</span><span class='l-v'>R$ " + fmtInt(Math.round(it.pc)) + "/hab</span></div><div class='c-bar'><i style='width:" + (maxPc ? it.pc / maxPc * 100 : 0) + "%;background:var(--accent)'></i></div></li>";
+        }
+        html += "</ul>";
+        html += "<p class='orc-contexto'>Menores: " + porPc.slice(-3).reverse().map(function (x) { return esc(x.uf) + " (R$ " + fmtInt(Math.round(x.pc)) + ")"; }).join(", ") + " · população: Censo 2022 (IBGE)</p>";
       }
-      html += "</ul>";
-      html += "<p class='orc-contexto'>Menores: " + porPc.slice(-3).reverse().map(function (x) { return esc(x.uf) + " (R$ " + fmtInt(Math.round(x.pc)) + ")"; }).join(", ") + " · população: Censo 2022 (IBGE)</p>";
 
       const porInt = porestado.slice().sort(function (a, b) { return b.pctInt - a.pctInt; });
       const totInt = totLoa ? 100 - (totCap / totLoa * 100) : 0;
       html += "<h3>Interiorização — quanto do orçamento federal fica fora das capitais</h3>";
-      html += "<p class='orc-contexto'>" + totInt.toFixed(0) + "% dos R$ " + (totLoa / 1e9).toFixed(2).replace(".", ",") + " bilhões das IES federais é aplicado em sedes fora das capitais estaduais.</p>";
+      html += "<p class='orc-contexto'>" + totInt.toFixed(0) + "% dos R$ " + (totLoa / 1e9).toFixed(2).replace(".", ",") + " bilhões das IES federais" + (ano === "2026" ? "" : " com dotação em " + ano) + " é aplicado em sedes fora das capitais estaduais.</p>";
       html += "<ul class='orc-lista'>";
       const maxInt = porInt.length ? porInt[0].pctInt : 0;
       for (const it of porInt.slice(0, 5)) {
@@ -471,7 +537,7 @@
       html += "<p class='orc-contexto'>Menor interiorização: " + porInt.slice(-3).map(function (x) { return esc(x.uf) + " (" + x.pctInt.toFixed(0) + "%)"; }).join(", ") + "</p>";
     }
 
-    if (MAT) {
+    if (MAT && ano === "2026") {
       const al = R.institucoes.filter(function (n) { return ORC.valores[n.id] && MAT.mat[n.id]; })
         .map(function (n) { return { n: n, pa: ORC.valores[n.id]["2026"].loa / MAT.mat[n.id] }; })
         .sort(function (a, b) { return b.pa - a.pa; });
@@ -501,6 +567,21 @@
 
     html += "<p class='ficha-fonte'>Fonte: <a href='" + esc(ORC.meta.url) + "' target='_blank' rel='noopener'>" + esc(ORC.meta.fonte) + "</a> · dados abertos. LOA e execução das unidades orçamentárias próprias; exclui hospitais universitários (EBSERH) e instituições estaduais/municipais.</p>";
     return html;
+  }
+
+  function setAnoPainel(ano) {
+    ano = String(ano);
+    if (ano === ANO_PAINEL) return;
+    ANO_PAINEL = ano;
+    if (vista !== "orcamento") return;
+    const alvo = document.getElementById("orc-ano-conteudo");
+    const val = document.getElementById("orc-ano-val");
+    const rng = document.getElementById("orc-ano-range");
+    const sc = fichaConteudo.scrollTop;
+    if (alvo) alvo.innerHTML = renderOrcamentoConteudo();
+    if (val) val.textContent = ano;
+    if (rng) rng.value = ano;
+    fichaConteudo.scrollTop = sc;
   }
 
   document.getElementById("stat-nos").textContent = A.nodes.length;
@@ -735,7 +816,7 @@
   };
 
   const btnOrc = $("#btn-orc");
-  if (btnOrc && ORC && ORCD) {
+  if (btnOrc && ORC && ORCD && ORCH) {
     document.getElementById("stat-loa").textContent = fmtCompact(ORC.meta.totais["2026"].loa);
     btnOrc.addEventListener("click", function () {
       vista = "orcamento";
@@ -746,6 +827,27 @@
   } else if (btnOrc) {
     btnOrc.hidden = true;
   }
+
+  fichaConteudo.addEventListener("input", function (ev) {
+    if (vista !== "orcamento") return;
+    const t = ev.target;
+    if (t && t.classList && t.classList.contains("orc-ano-range")) setAnoPainel(t.value);
+  });
+
+  fichaConteudo.addEventListener("click", function (ev) {
+    if (vista !== "orcamento") return;
+    let el = ev.target;
+    while (el && el !== fichaConteudo && !(el.tagName === "svg" && el.classList && el.classList.contains("hist-cli"))) el = el.parentNode;
+    if (!el || el === fichaConteudo || el.nodeType !== 1) return;
+    const anosCli = (el.getAttribute("data-anos") || "").split(",");
+    if (anosCli.length < 2 || !anosCli[0]) return;
+    const r = el.getBoundingClientRect();
+    if (!r.width) return;
+    const px = (ev.clientX - r.left) / r.width * 320;
+    let i = Math.round((px - 6) / (314 - 6) * (anosCli.length - 1));
+    i = Math.max(0, Math.min(anosCli.length - 1, i));
+    setAnoPainel(anosCli[i]);
+  });
 
   $("#ficha-fechar").addEventListener("click", function () {
     R.select(null);
