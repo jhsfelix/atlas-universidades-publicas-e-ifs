@@ -98,6 +98,41 @@ h1 .e { font-style: italic; font-weight: 500; color: var(--accent); }
 }
 .tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--paper); font-size: .76rem; padding: 6px 10px; max-width: 300px; z-index: 30; box-shadow: 0 2px 10px rgba(0, 0, 0, .18); }
 
+#roda { touch-action: none; cursor: grab; }
+#roda.arrastando { cursor: grabbing; }
+.zoom-ctl { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 4px; z-index: 5; }
+.zoom-ctl button { width: 32px; height: 32px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; font-size: 1.05rem; cursor: pointer; line-height: 1; display: flex; align-items: center; justify-content: center; }
+.zoom-ctl button:hover { border-color: var(--ink); }
+
+.modo-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.modo-toggle button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; padding: 8px 14px; cursor: pointer; }
+.modo-toggle button.ativo { background: var(--ink); color: var(--paper); }
+
+.mapa-uf { margin-top: 6px; overflow-x: auto; }
+.mapa-nota { color: var(--muted); font-size: .78rem; margin: 0 0 14px; }
+.uf-grid { display: grid; grid-template-columns: repeat(9, 1fr); grid-auto-rows: minmax(108px, auto); gap: 6px; min-width: 660px; }
+.uf-cel { border: 1px solid var(--line); background: transparent; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 4px; cursor: pointer; font: inherit; min-height: 108px; transition: opacity .18s ease, border-color .18s ease; }
+.uf-cel:hover { border-color: var(--ink); }
+.uf-cel.off { opacity: .22; }
+.uf-bolha { border-radius: 50%; display: block; }
+.uf-sigla { font-size: .78rem; font-weight: 700; color: var(--ink); letter-spacing: .04em; }
+.uf-info { font-size: .68rem; color: var(--muted); text-align: center; line-height: 1.35; }
+
+.tour { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); width: min(680px, 92vw); background: var(--ink); color: var(--paper); border-radius: 12px; padding: 14px 18px; z-index: 60; box-shadow: 0 6px 24px rgba(0, 0, 0, .25); }
+.tour p { margin: 0 0 10px; font-size: .88rem; line-height: 1.5; }
+.tour-controles { display: flex; gap: 8px; align-items: center; }
+.tour-controles button { border: 1px solid color-mix(in srgb, var(--paper) 35%, transparent); background: transparent; color: var(--paper); font: inherit; font-size: .8rem; border-radius: 999px; padding: 5px 14px; cursor: pointer; }
+.tour-controles button:hover { border-color: var(--paper); }
+#tour-pos { font-size: .72rem; opacity: .7; }
+
+.hist { width: 100%; height: auto; margin-top: 6px; display: block; }
+.hist-linha { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.hist-area { fill: color-mix(in srgb, var(--accent) 12%, transparent); stroke: none; }
+.hist circle { fill: var(--accent); }
+.hist-max { font-size: 9px; fill: var(--muted); font-weight: 600; }
+.hist-ano { font-size: 9px; fill: var(--muted); }
+.hist-fim { font-size: 10px; fill: var(--accent); font-weight: 700; }
+
 .guide { fill: none; stroke: var(--line); stroke-width: 1; }
 .edge { fill: none; stroke: var(--ink); opacity: .14; pointer-events: none; transition: opacity .18s ease, stroke .18s ease; }
 .rel-mantem, .rel-supervisiona { stroke-width: 1.1; }
@@ -136,6 +171,8 @@ h1 .e { font-style: italic; font-weight: 500; color: var(--accent); }
 .ficha-site { margin: 0 0 4px; }
 .ficha-site a { color: var(--accent); font-size: .85rem; text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 1px; }
 .ficha-site a:hover { color: var(--ink); }
+.ficha-link { border: 1px solid var(--line); background: transparent; color: var(--muted); font: inherit; font-size: .72rem; padding: 3px 10px; border-radius: 999px; cursor: pointer; margin-left: 8px; }
+.ficha-link:hover { border-color: var(--ink); color: var(--ink); }
 .ficha-desc { color: var(--muted); font-size: .9rem; }
 .ficha h3 { margin: 24px 0 8px; font-size: .7rem; text-transform: uppercase; letter-spacing: .12em; border-top: 1px solid var(--line); padding-top: 16px; }
 .ficha-rels { margin: 0; padding: 0; list-style: none; }
@@ -150,7 +187,9 @@ h1 .e { font-style: italic; font-weight: 500; color: var(--accent); }
 .ficha-fonte a { color: inherit; border-bottom: 1px solid currentColor; text-decoration: none; }
 #btn-orc { border: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-size: .78rem; padding: 7px 14px; border-radius: 999px; cursor: pointer; }
 #btn-orc strong { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
-#btn-orc:hover { border-color: var(--ink); }
+#btn-orc:hover, #btn-tour:hover { border-color: var(--ink); }
+.topo-botoes { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+#btn-tour { border: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-size: .78rem; padding: 7px 14px; border-radius: 999px; cursor: pointer; }
 .orc-rank { color: var(--muted); font-size: .8rem; margin: 4px 0 10px; }
 .orc-exec { padding-top: 4px; }
 .orc-exec-bar { display: flex; height: 14px; border-radius: 4px; overflow: hidden; border: 1px solid var(--line); background: repeating-linear-gradient(45deg, var(--line), var(--line) 3px, transparent 3px, transparent 7px); }

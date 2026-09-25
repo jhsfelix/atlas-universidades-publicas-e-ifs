@@ -24,6 +24,8 @@
 
   const ORC = window.ORCAMENTO || null;
   const ORCD = window.ORC_DESPESAS || null;
+  const ORCE = window.ORC_EXEC || null;
+  const ORCH = window.ORC_HIST || null;
   const ORC_CHAVES = [
     { k: "loa", r: "Dotação (LOA)" },
     { k: "autorizado", r: "Autorizado" },
@@ -127,6 +129,73 @@
     return "<h3>Principais ações (2026)</h3><ul class='orc-acoes'>" + linhas + outrosLinha + "</ul>";
   }
 
+  const ELEM_CORES = ["var(--accent)", "var(--c-federal)", "var(--c-if)", "var(--c-estadual)", "var(--c-municipal)", "#7C828A"];
+
+  function renderExecElementos(id) {
+    if (!ORCE) return "";
+    const es = ORCE.elementos["2026"][id];
+    if (!es || !es.length) return "";
+    const tot = es.reduce(function (s, x) { return s + x[2]; }, 0);
+    if (!tot) return "";
+    const vis = es.filter(function (x) { return x[0] !== "outros"; }).slice(0, 6);
+    const outros = es.find(function (x) { return x[0] === "outros"; });
+    let html = "<h3>Para onde foi o empenho (2026)</h3><div class='orc-compos'>";
+    vis.forEach(function (x, i) {
+      const pct = x[2] / tot * 100;
+      html += "<div class='orc-compo' title='" + esc(x[1]) + "'><span class='c-k'>" + esc(x[0]) + " · " + esc(x[1]) + "</span><span class='c-v'>" + fmtCompact(x[2]) + " · " + pct.toFixed(1) + "%</span><div class='c-bar'><i style='width:" + Math.max(1, pct) + "%;background:" + ELEM_CORES[i % ELEM_CORES.length] + "'></i></div></div>";
+    });
+    if (outros && outros[2] > tot * 0.05) {
+      html += "<div class='orc-compo'><span class='c-k'>Outros elementos</span><span class='c-v'>" + fmtCompact(outros[2]) + " · " + (outros[2] / tot * 100).toFixed(1) + "%</span><div class='c-bar'><i class='bar-outros' style='width:" + (outros[2] / tot * 100) + "%'></i></div></div>";
+    }
+    html += "</div>";
+    return html;
+  }
+
+  function chartLinha(vals, anos, titulo) {
+    let max = 0;
+    let min = Infinity;
+    const idxs = [];
+    for (let i = 0; i < vals.length; i++) {
+      if (vals[i] == null) continue;
+      idxs.push(i);
+      if (vals[i] > max) max = vals[i];
+      if (vals[i] < min) min = vals[i];
+    }
+    if (idxs.length < 2) return "";
+    const W = 320;
+    const H = 92;
+    const X0 = 6;
+    const X1 = 314;
+    const Y0 = 16;
+    const Y1 = 74;
+    const x = function (i) { return X0 + (i * (X1 - X0)) / (anos.length - 1); };
+    const y = function (v) { return Y0 + (Y1 - Y0) * (1 - (v - min) / (max - min || 1)); };
+    let d = "";
+    for (const i of idxs) {
+      d += (d ? " L" : " M") + x(i).toFixed(1) + " " + y(vals[i]).toFixed(1);
+    }
+    const dArea = d + " L" + x(idxs[idxs.length - 1]).toFixed(1) + " " + Y1 + " L" + x(idxs[0]).toFixed(1) + " " + Y1 + " Z";
+    let pontos = "";
+    for (const i of idxs) {
+      pontos += "<circle cx='" + x(i).toFixed(1) + "' cy='" + y(vals[i]).toFixed(1) + "' r='2.6'><title>" + anos[i] + ": " + fmtCompact(vals[i]) + "</title></circle>";
+    }
+    const titulos = anos.map(function (a, i) { return a + ": " + (vals[i] == null ? "—" : fmtCompact(vals[i])); }).join(" · ");
+    return "<svg class='hist' viewBox='0 0 320 92' role='img' aria-label='" + esc(titulo || "Evolução do orçamento") + "'><title>" + esc(titulos) + "</title>" +
+      "<path class='hist-area' d='" + dArea + "'/>" +
+      "<path class='hist-linha' d='" + d + "'/>" +
+      pontos +
+      "<text class='hist-max' x='" + X0 + "' y='10'>" + fmtCompact(max) + "</text>" +
+      "<text class='hist-ano' x='" + X0 + "' y='90'>" + anos[idxs[0]] + "</text>" +
+      "<text class='hist-ano' x='" + X1 + "' y='90' text-anchor='end'>" + anos[idxs[idxs.length - 1]] + "</text>" +
+      "<text class='hist-fim' x='" + X1 + "' y='" + Math.max(10, y(vals[idxs[idxs.length - 1]]) - 6).toFixed(1) + "' text-anchor='end'>" + fmtCompact(vals[idxs[idxs.length - 1]]) + "</text>" +
+      "</svg>";
+  }
+
+  function renderHist(id) {
+    if (!ORCH || !ORCH.valores[id]) return "";
+    return chartLinha(ORCH.valores[id], ORCH.anos, "Evolução do orçamento de " + (R.byId.get(id) ? R.byId.get(id).label : ""));
+  }
+
   function renderOrc(orc, n) {
     const rot = n.tipo === "federal" ? "universidades federais" : "Institutos Federais";
     const rank = ranks().get(n.id);
@@ -146,6 +215,8 @@
     }
     html += "</table>";
     if (ORCD) html += renderGnd(n.id) + renderAcoes(n.id);
+    if (ORCE) html += renderExecElementos(n.id);
+    html += renderHist(n.id);
     html += "<p class='ficha-fonte'>Fonte: <a href='" + esc(ORC.meta.url) + "' target='_blank' rel='noopener'>" + esc(ORC.meta.fonte) + "</a> · dados abertos. Exclui unidades de hospitais universitários (EBSERH).</p>";
     return html;
   }
@@ -190,6 +261,19 @@
     html += "<h3>Composição por grupo de despesa (2026)</h3>";
     html += "<div class='orc-stack'>" + gndArr.map(function (g) { return "<span style='width:" + (g.v / gndTotal * 100) + "%;background:" + (GND_CORES[g.k] || "var(--muted)") + "'></span>"; }).join("") + "</div>";
     html += "<div class='orc-leg'>" + gndArr.map(function (g) { return "<span><i style='background:" + (GND_CORES[g.k] || "var(--muted)") + "'></i>" + esc(GND_ROTULOS[g.k] || g.k) + " · " + (g.v / gndTotal * 100).toFixed(0) + "% · " + fmtCompact(g.v) + "</span>"; }).join("") + "</div>";
+
+    if (ORCH) {
+      html += "<h3>Evolução 2019–2026</h3>";
+      const porAno = ORCH.anos.map(function (a, i) {
+        let s = null;
+        for (const id of Object.keys(ORCH.valores)) {
+          const v = ORCH.valores[id][i];
+          if (v != null) s = (s || 0) + v;
+        }
+        return s;
+      });
+      html += chartLinha(porAno, ORCH.anos, "Evolução do orçamento das IES federais");
+    }
 
     html += "<div class='orc-listas'>";
     html += "<div><h3 class='h3-min'>Maiores dotações (2026)</h3><ul class='orc-lista'>";
@@ -266,11 +350,18 @@
     R.applyFilter(state);
     const visiveis = R.institucoes.filter(function (n) { return state.tipos.has(n.tipo) && (state.uf === "todas" || n.uf === state.uf); });
     $("#contagem").textContent = visiveis.length + " de " + R.institucoes.length + " instituições em foco";
+    const mapCont = $("#mapa-uf");
+    if (mapCont && mapCont.dataset.pronto) {
+      mapCont.querySelectorAll(".uf-cel").forEach(function (cel) {
+        cel.classList.toggle("off", state.uf !== "todas" && cel.dataset.uf !== state.uf);
+      });
+    }
   }
   refresh();
 
   const busca = $("#busca");
   const resultados = $("#resultados");
+  let idxBusca = -1;
   function normaliza(s) {
     return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
@@ -288,6 +379,7 @@
       return alvo.indexOf(q) !== -1;
     }).slice(0, 8);
     resultados.innerHTML = "";
+    idxBusca = -1;
     if (itens.length === 0) {
       const li = document.createElement("li");
       li.textContent = "Nada encontrado.";
@@ -328,7 +420,7 @@
     html += "</p>";
     html += "<h2>" + esc(n.label) + "</h2>";
     html += "<p class='ficha-nome'>" + esc(n.nome) + "</p>";
-    if (n.site) html += "<p class='ficha-site'><a href='" + esc(n.site) + "' target='_blank' rel='noopener'>site oficial</a></p>";
+    if (n.site) html += "<p class='ficha-site'><a href='" + esc(n.site) + "' target='_blank' rel='noopener'>site oficial</a> <button type='button' class='ficha-link'>copiar link</button></p>";
     html += "<h3>Quem manda aqui</h3><ul class='ficha-rels'>";
     for (const e of rels) {
       const origem = R.byId.get(e.s);
@@ -350,7 +442,7 @@
     let html = "<p class='ficha-meta'><span class='badge tipo-" + n.tipo + "'>" + esc(A.tipos[n.tipo] ? A.tipos[n.tipo].rotulo : n.tipo) + "</span></p>";
     html += "<h2>" + esc(n.label) + "</h2>";
     html += "<p class='ficha-nome'>" + esc(n.nome) + "</p>";
-    if (n.site) html += "<p class='ficha-site'><a href='" + esc(n.site) + "' target='_blank' rel='noopener'>site oficial</a></p>";
+    if (n.site) html += "<p class='ficha-site'><a href='" + esc(n.site) + "' target='_blank' rel='noopener'>site oficial</a> <button type='button' class='ficha-link'>copiar link</button></p>";
     if (n.desc) html += "<p class='ficha-desc'>" + esc(n.desc) + "</p>";
     if (saidas.length) {
       html += "<h3>Relações (" + saidas.length + ")</h3><ul class='ficha-rels'>";
@@ -382,19 +474,38 @@
     } else {
       fichaConteudo.innerHTML = renderHub(n);
     }
+    const linkBtn = fichaConteudo.querySelector(".ficha-link");
+    if (linkBtn) {
+      linkBtn.addEventListener("click", function () {
+        const url = location.href.split("?")[0] + (id ? "?id=" + id : "");
+        const ok = function () {
+          linkBtn.textContent = "link copiado";
+          setTimeout(function () { linkBtn.textContent = "copiar link"; }, 1800);
+        };
+        try { navigator.clipboard.writeText(url).then(ok, ok); } catch (e) { ok(); }
+      });
+    }
     ficha.hidden = false;
     $("#ficha-fechar").focus();
   }
 
+  function urlDe(id) {
+    return location.pathname + (id ? "?id=" + id : "");
+  }
+
   let vista = null;
   R.onSelect = function (id) {
+    if (id && !R.byId.has(id)) return;
     if (id) {
+      const tEl = $("#tour");
+      if (tEl && !tEl.hidden) saiTour();
       vista = "ficha";
       render(id);
-      return;
+    } else {
+      vista = null;
+      ficha.hidden = true;
     }
-    vista = null;
-    ficha.hidden = true;
+    try { history.replaceState(null, "", urlDe(id)); } catch (e) { }
   };
 
   const btnOrc = $("#btn-orc");
@@ -415,11 +526,147 @@
   });
 
   document.addEventListener("keydown", function (ev) {
+    const alvo = ev.target;
+    const digitando = alvo && (alvo.tagName === "INPUT" || alvo.tagName === "TEXTAREA" || alvo.tagName === "SELECT");
     if (ev.key === "Escape") {
       R.select(null);
       resultados.hidden = true;
+      idxBusca = -1;
+    } else if (ev.key === "/" && !digitando) {
+      ev.preventDefault();
+      busca.focus();
+    } else if (!resultados.hidden && (ev.key === "ArrowDown" || ev.key === "ArrowUp")) {
+      ev.preventDefault();
+      const bts = resultados.querySelectorAll("button");
+      if (!bts.length) return;
+      idxBusca = ev.key === "ArrowDown" ? Math.min(bts.length - 1, idxBusca + 1) : Math.max(0, idxBusca - 1);
+      bts.forEach(function (b, i) { b.classList.toggle("ativo", i === idxBusca); });
+    } else if (ev.key === "Enter" && !resultados.hidden) {
+      const ativo = resultados.querySelector("button.ativo") || resultados.querySelector("button");
+      if (ativo) ativo.click();
     }
   });
+
+  const MAPA_UF = [
+    ["RR", 0, 0], ["AP", 1, 0],
+    ["AM", 0, 1], ["PA", 1, 1], ["MA", 2, 1], ["PI", 3, 1], ["CE", 4, 1],
+    ["AC", 0, 2], ["MT", 1, 2], ["TO", 2, 2], ["BA", 3, 2], ["RN", 4, 2], ["PB", 5, 2], ["PE", 6, 2], ["AL", 7, 2], ["SE", 8, 2],
+    ["RO", 0, 3], ["GO", 1, 3], ["MG", 2, 3], ["ES", 3, 3],
+    ["MS", 0, 4], ["DF", 1, 4], ["SP", 2, 4], ["RJ", 3, 4],
+    ["PR", 2, 5], ["SC", 3, 5],
+    ["RS", 2, 6]
+  ];
+
+  function constroiMapa() {
+    const cont = $("#mapa-uf");
+    if (!cont || cont.dataset.pronto) return;
+    const porUf = {};
+    for (const n of R.institucoes) {
+      if (!n.uf) continue;
+      if (!porUf[n.uf]) porUf[n.uf] = { count: 0, loa: 0 };
+      porUf[n.uf].count++;
+      const v = ORC && ORC.valores[n.id];
+      if (v) porUf[n.uf].loa += v["2026"].loa;
+    }
+    let maxCount = 0;
+    let maxLoa = 0;
+    for (const uf in porUf) {
+      if (porUf[uf].count > maxCount) maxCount = porUf[uf].count;
+      if (porUf[uf].loa > maxLoa) maxLoa = porUf[uf].loa;
+    }
+    let html = "<p class='mapa-nota'>Tamanho da bolha = número de IES públicas no estado. Intensidade da cor = orçamento federal (LOA 2026). Clique em um estado para filtrar a roda.</p><div class='uf-grid'>";
+    for (const m of MAPA_UF) {
+      const uf = m[0];
+      const d = porUf[uf] || { count: 0, loa: 0 };
+      const diam = d.count ? Math.round(20 + 26 * Math.sqrt(d.count / (maxCount || 1))) : 0;
+      const intens = d.loa ? Math.round(18 + 72 * Math.sqrt(d.loa / (maxLoa || 1))) : 0;
+      const cor = d.loa ? "background:color-mix(in srgb, var(--accent) " + intens + "%, var(--line))" : "background:var(--line)";
+      html += "<button type='button' class='uf-cel' data-uf='" + uf + "' style='grid-column:" + (m[1] + 1) + ";grid-row:" + (m[2] + 1) + "' title='" + uf + (d.loa ? " · LOA 2026 das IES federais: " + fmtCompact(d.loa) : " · sem IES federal") + "'>" +
+        "<span class='uf-bolha' style='width:" + diam + "px;height:" + diam + "px;" + cor + "'></span>" +
+        "<span class='uf-sigla'>" + uf + "</span>" +
+        "<span class='uf-info'>" + d.count + " IES" + (d.loa ? " · " + fmtCompact(d.loa) : "") + "</span></button>";
+    }
+    html += "</div>";
+    cont.innerHTML = html;
+    cont.dataset.pronto = "1";
+    cont.addEventListener("click", function (ev) {
+      const cel = ev.target.closest(".uf-cel");
+      if (!cel) return;
+      state.uf = cel.dataset.uf;
+      selUf.value = state.uf;
+      setModo("roda");
+      refresh();
+    });
+  }
+
+  const btnRoda = $("#modo-roda");
+  const btnMapa = $("#modo-mapa");
+  function setModo(m) {
+    if (btnRoda) btnRoda.classList.toggle("ativo", m === "roda");
+    if (btnMapa) btnMapa.classList.toggle("ativo", m === "mapa");
+    const wrapEl = $("#roda-wrap");
+    const contEl = $("#mapa-uf");
+    const dicaEl = $(".dica");
+    const tEl = $("#tour");
+    if (wrapEl) wrapEl.hidden = m !== "roda";
+    if (contEl) contEl.hidden = m !== "mapa";
+    if (dicaEl) dicaEl.hidden = m !== "roda";
+    if (tEl && !tEl.hidden && m !== "roda") saiTour();
+  }
+  if (btnRoda) btnRoda.addEventListener("click", function () { setModo("roda"); });
+  if (btnMapa) btnMapa.addEventListener("click", function () { constroiMapa(); setModo("mapa"); });
+
+  const chkEscala = $("#chk-escala");
+  if (chkEscala) {
+    if (!ORC) chkEscala.disabled = true;
+    chkEscala.addEventListener("change", function () { R.setEscalaOrcamento(chkEscala.checked); });
+  }
+
+  const zoomBtnIn = $("#zoom-in");
+  if (zoomBtnIn) zoomBtnIn.addEventListener("click", function () { R.zoomIn(); });
+  const zoomBtnOut = $("#zoom-out");
+  if (zoomBtnOut) zoomBtnOut.addEventListener("click", function () { R.zoomOut(); });
+  const zoomBtnReset = $("#zoom-reset");
+  if (zoomBtnReset) zoomBtnReset.addEventListener("click", function () { R.resetZoom(); });
+
+  const PASSOS = [
+    { texto: "O sistema: a União, os Estados e os Municípios mantêm o ensino superior público — art. 211 da Constituição.", ids: ["brasil", "uniao", "estados", "municipios"] },
+    { texto: "O MEC supervisiona as 69 universidades federais e os 38 Institutos Federais — LDB (arts. 9º e 46) e Lei 11.892/2008.", ids: ["mec"] },
+    { texto: "O INEP avalia todas as instituições pelo SINAES — Lei 10.861/2004. É a linha que liga o INEP a cada IES.", ids: ["inep"] },
+    { texto: "CAPES avalia e CNPq fomenta a pós-graduação e a pesquisa — Lei 11.502/2007.", ids: ["capes", "cnpq"] },
+    { texto: "As associações reúnem os dirigentes: ANDIFES (federais), CONIF (IFs) e ABRUEM (estaduais e municipais).", ids: ["andifes", "conif", "abruem"] },
+    { texto: "E quem paga a conta: R$ 98,96 bilhões no LOA 2026 para as 107 IES federais — 83% vão para pessoal e encargos. Abra o painel do Orçamento no topo para explorar.", ids: [] }
+  ];
+  let passo = 0;
+  const tourEl = $("#tour");
+  const tourTexto = $("#tour-texto");
+  function mostraPasso() {
+    const p = PASSOS[passo];
+    if (tourTexto) tourTexto.textContent = p.texto;
+    const pos = $("#tour-pos");
+    if (pos) pos.textContent = (passo + 1) + "/" + PASSOS.length;
+    R.highlightMany(p.ids);
+  }
+  function iniciaTour() {
+    passo = 0;
+    if (tourEl) tourEl.hidden = false;
+    R.setTour(true);
+    mostraPasso();
+  }
+  function saiTour() {
+    if (tourEl) tourEl.hidden = true;
+    R.setTour(false);
+  }
+  const btnTour = $("#btn-tour");
+  if (btnTour) btnTour.addEventListener("click", iniciaTour);
+  const tourProximo = $("#tour-proximo");
+  if (tourProximo) tourProximo.addEventListener("click", function () {
+    if (passo < PASSOS.length - 1) { passo++; mostraPasso(); } else saiTour();
+  });
+  const tourAnterior = $("#tour-anterior");
+  if (tourAnterior) tourAnterior.addEventListener("click", function () { if (passo > 0) { passo--; mostraPasso(); } });
+  const tourSair = $("#tour-sair");
+  if (tourSair) tourSair.addEventListener("click", saiTour);
 
   const btnTema = $("#btn-tema");
   function aplicaTema(t) {
@@ -440,4 +687,10 @@
     document.getElementById("link-issues").href = A.meta.repo + "/issues";
     document.getElementById("link-repo").href = A.meta.repo;
   }
+
+  try {
+    const p = new URLSearchParams(location.search);
+    const idDeep = p.get("id");
+    if (idDeep && R.byId.has(idDeep)) R.select(idDeep);
+  } catch (e) { }
 })();

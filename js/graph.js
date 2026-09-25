@@ -2,6 +2,7 @@
   "use strict";
 
   const ATLAS = window.ATLAS;
+  const ORC = window.ORCAMENTO || null;
   const svg = document.getElementById("roda");
   const wrap = document.getElementById("roda-wrap");
   const tip = document.getElementById("tip");
@@ -127,6 +128,7 @@
 
   const gNodes = el("g", { class: "nodes" }, svg);
   const nodeEls = new Map();
+  const dotEls = new Map();
 
   ATLAS.nodes.forEach(function (n) {
     const isInst = TIPO_ORDEM.indexOf(n.tipo) !== -1;
@@ -137,7 +139,8 @@
       const t = el("text", { x: n._x, y: n._y, class: "centro-label", "text-anchor": "middle", dy: "0.35em" }, g);
       t.textContent = "Brasil";
     } else {
-      el("circle", { cx: n._x, cy: n._y, r: isInst ? 4.6 : 9, class: "dot" }, g);
+      const dot = el("circle", { cx: n._x, cy: n._y, r: isInst ? 4.6 : 9, class: "dot" }, g);
+      if (isInst) dotEls.set(n.id, dot);
       const g2 = el("g", { transform: "translate(" + CX + " " + CY + ") rotate(" + n._deg + ") translate(" + n._r + " 0)" }, g);
       const t = el("text", {
         class: isInst ? "label" : "label hub-label",
@@ -226,22 +229,172 @@
     if (filterActive && currentFilter) applyFilter(currentFilter);
   }
 
+  function fmtCurto(v) {
+    if (v >= 1e9) return "R$ " + (v / 1e9).toFixed(2).replace(".", ",") + " bi";
+    return "R$ " + (v / 1e6).toFixed(0).replace(".", ",") + " mi";
+  }
+
   function showTip(n, ev) {
     if (!tip) return;
     const rect = wrap.getBoundingClientRect();
-    tip.textContent = n.nome + (n.uf ? " · " + n.uf : "");
+    let texto = n.nome + (n.uf ? " · " + n.uf : "");
+    if (ORC && ORC.valores[n.id]) texto += " · LOA 2026: " + fmtCurto(ORC.valores[n.id]["2026"].loa);
+    tip.textContent = texto;
     tip.hidden = false;
     const x = ev.clientX - rect.left + 14;
     const y = ev.clientY - rect.top + 14;
-    tip.style.left = Math.min(x, rect.width - 240) + "px";
+    tip.style.left = Math.min(x, rect.width - 260) + "px";
     tip.style.top = y + "px";
   }
 
   function hideTip() { if (tip) tip.hidden = true; }
 
+  let tourAtivo = false;
+
+  function highlightMany(ids) {
+    const keep = new Set(ids);
+    const idx = new Set();
+    for (const id of ids) {
+      for (const i of edgesIdx(id)) {
+        idx.add(i);
+        keep.add(edges[i].s);
+        keep.add(edges[i].t);
+      }
+    }
+    edgeEls.forEach(function (p, i) {
+      const on = idx.has(i);
+      p.classList.toggle("hl", on);
+      p.classList.toggle("dim", ids.length > 0 && !on);
+    });
+    nodeEls.forEach(function (g, nid) {
+      const on = keep.has(nid);
+      g.classList.toggle("hl", on);
+      g.classList.toggle("dim", ids.length > 0 && !on);
+    });
+  }
+
+  function setTour(on) {
+    tourAtivo = !!on;
+    if (!tourAtivo) clearHighlight();
+  }
+
+  const VB = { x: 0, y: 0, w: 1100, h: 1100 };
+  function aplicaVB() {
+    svg.setAttribute("viewBox", VB.x + " " + VB.y + " " + VB.w + " " + VB.h);
+  }
+  function zoomIn() {
+    zoomAtEm(VB.x + VB.w / 2, VB.y + VB.h / 2, 1 / 1.25);
+  }
+  function zoomOut() {
+    zoomAtEm(VB.x + VB.w / 2, VB.y + VB.h / 2, 1.25);
+  }
+  function resetZoom() {
+    VB.x = 0;
+    VB.y = 0;
+    VB.w = 1100;
+    VB.h = 1100;
+    aplicaVB();
+  }
+  function zoomAtEm(px, py, fator) {
+    const nw = Math.max(140, Math.min(1100, VB.w * fator));
+    const f = nw / VB.w;
+    VB.x = px - (px - VB.x) * f;
+    VB.y = py - (py - VB.y) * f;
+    VB.w = nw;
+    VB.h = VB.w;
+    aplicaVB();
+  }
+  wrap.addEventListener("wheel", function (ev) {
+    ev.preventDefault();
+    const r = wrap.getBoundingClientRect();
+    const px = VB.x + (ev.clientX - r.left) / r.width * VB.w;
+    const py = VB.y + (ev.clientY - r.top) / r.height * VB.h;
+    zoomAtEm(px, py, ev.deltaY > 0 ? 1.15 : 1 / 1.15);
+  }, { passive: false });
+
+  const ponteiros = new Map();
+  let arrastou = false;
+  let ultimo = null;
+  let pinchDist = 0;
+
+  svg.addEventListener("pointerdown", function (ev) {
+    try { svg.setPointerCapture(ev.pointerId); } catch (e) { }
+    ponteiros.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    ultimo = { x: ev.clientX, y: ev.clientY };
+    arrastou = false;
+    if (ponteiros.size === 2) {
+      const pts = Array.from(ponteiros.values());
+      pinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    }
+  });
+  svg.addEventListener("pointermove", function (ev) {
+    if (!ponteiros.has(ev.pointerId)) return;
+    ponteiros.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (ponteiros.size === 2) {
+      const pts = Array.from(ponteiros.values());
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      if (pinchDist > 0 && dist > 0) {
+        const r = wrap.getBoundingClientRect();
+        const mx = (pts[0].x + pts[1].x) / 2 - r.left;
+        const my = (pts[0].y + pts[1].y) / 2 - r.top;
+        zoomAtEm(VB.x + mx / r.width * VB.w, VB.y + my / r.height * VB.h, pinchDist / dist);
+      }
+      pinchDist = dist;
+      arrastou = true;
+      return;
+    }
+    const dx = ev.clientX - ultimo.x;
+    const dy = ev.clientY - ultimo.y;
+    if (dx || dy) {
+      const r = wrap.getBoundingClientRect();
+      VB.x -= dx / r.width * VB.w;
+      VB.y -= dy / r.height * VB.h;
+      aplicaVB();
+      if (Math.abs(dx) + Math.abs(dy) > 4) arrastou = true;
+    }
+    ultimo = { x: ev.clientX, y: ev.clientY };
+  });
+  function solta(ev) {
+    ponteiros.delete(ev.pointerId);
+    if (ponteiros.size < 2) pinchDist = 0;
+    if (ponteiros.size === 1) {
+      const rest = Array.from(ponteiros.values())[0];
+      ultimo = { x: rest.x, y: rest.y };
+    }
+  }
+  svg.addEventListener("pointerup", solta);
+  svg.addEventListener("pointercancel", solta);
+
+  let escalaOrc = false;
+  function setEscalaOrcamento(on) {
+    escalaOrc = !!on;
+    if (escalaOrc && ORC) {
+      let loaMin = Infinity;
+      let loaMax = 0;
+      for (const id of Object.keys(ORC.valores)) {
+        const v = ORC.valores[id]["2026"].loa;
+        if (v < loaMin) loaMin = v;
+        if (v > loaMax) loaMax = v;
+      }
+      const span = loaMax - loaMin || 1;
+      for (const n of institucoes) {
+        const dot = dotEls.get(n.id);
+        if (!dot) continue;
+        const v = ORC.valores[n.id];
+        const r = v ? 3 + 12 * Math.sqrt((v["2026"].loa - loaMin) / span) : 2.4;
+        dot.setAttribute("r", r.toFixed(2));
+      }
+    } else {
+      for (const n of institucoes) {
+        const dot = dotEls.get(n.id);
+        if (dot) dot.setAttribute("r", "4.6");
+      }
+    }
+  }
+
   svg.addEventListener("pointerover", function (ev) {
     const g = ev.target.closest("g.node");
-    if (!g || selected) return;
+    if (!g || selected || tourAtivo) return;
     const n = byId.get(g.dataset.id);
     highlight(g.dataset.id);
     showTip(n, ev);
@@ -257,12 +410,16 @@
 
   svg.addEventListener("pointerout", function (ev) {
     const g = ev.target.closest("g.node");
-    if (!g || selected) return;
+    if (!g || selected || tourAtivo) return;
     clearHighlight();
     hideTip();
   });
 
   svg.addEventListener("click", function (ev) {
+    if (arrastou) {
+      arrastou = false;
+      return;
+    }
     const g = ev.target.closest("g.node");
     if (!g) {
       select(null);
@@ -294,6 +451,12 @@
     tipos: TIPO_ORDEM,
     select: function (id) { select(id); },
     applyFilter: applyFilter,
-    isFilterActive: function () { return filterActive; }
+    isFilterActive: function () { return filterActive; },
+    setEscalaOrcamento: setEscalaOrcamento,
+    highlightMany: highlightMany,
+    setTour: setTour,
+    zoomIn: zoomIn,
+    zoomOut: zoomOut,
+    resetZoom: resetZoom
   };
 })();
