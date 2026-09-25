@@ -208,6 +208,26 @@ h1 .e { font-style: italic; font-weight: 500; color: var(--accent); }
 #btn-orc:hover, #btn-tour:hover { border-color: var(--ink); }
 .topo-botoes { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 #btn-tour { border: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-size: .78rem; padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+
+#btn-menu { border: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-size: .78rem; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+#btn-menu:hover { border-color: var(--ink); }
+#btn-menu svg { width: 15px; height: 15px; }
+
+.menu-veu { position: fixed; inset: 0; background: rgba(16, 18, 21, .45); z-index: 70; }
+.menu-painel { position: fixed; top: 0; right: 0; height: 100%; width: min(430px, 94vw); background: var(--paper); border-left: 1px solid var(--line); overflow-y: auto; z-index: 80; box-shadow: -12px 0 32px rgba(0, 0, 0, .14); }
+.menu-cabecalho { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 24px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--paper); z-index: 1; }
+.menu-cabecalho h2 { margin: 0; font-size: 1.15rem; font-weight: 800; letter-spacing: -0.01em; }
+#menu-fechar { border: 1px solid var(--line); background: transparent; color: var(--muted); width: 38px; height: 38px; flex: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; }
+#menu-fechar:hover { color: var(--ink); border-color: var(--ink); }
+#menu-fechar svg { width: 16px; height: 16px; }
+.menu-conteudo { padding: 10px 24px 30px; }
+.menu-secao { margin: 22px 0 6px; font-size: .68rem; text-transform: uppercase; letter-spacing: .16em; color: var(--muted); font-weight: 700; }
+.menu-item { display: block; width: 100%; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); color: var(--ink); font: inherit; padding: 12px 10px 13px; cursor: pointer; text-decoration: none; }
+.menu-item:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.menu-item strong { display: block; font-size: .95rem; font-weight: 700; }
+.menu-item span { display: block; color: var(--muted); font-size: .82rem; margin-top: 2px; }
+.menu-rodape { margin: 26px 0 0; padding: 14px 10px 0; border-top: 1px solid var(--line); font-size: .78rem; color: var(--muted); }
+
 .orc-rank { color: var(--muted); font-size: .8rem; margin: 4px 0 10px; }
 .orc-exec { padding-top: 4px; }
 .orc-exec-bar { display: flex; height: 14px; border-radius: 4px; overflow: hidden; border: 1px solid var(--line); background: repeating-linear-gradient(45deg, var(--line), var(--line) 3px, transparent 3px, transparent 7px); }

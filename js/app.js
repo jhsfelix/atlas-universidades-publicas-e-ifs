@@ -873,4 +873,145 @@
     const idDeep = p.get("id");
     if (idDeep && R.byId.has(idDeep)) R.select(idDeep);
   } catch (e) { }
+
+  const menuPainel = $("#menu-painel");
+  const menuVeu = $("#menu-veu");
+  const btnMenu = $("#btn-menu");
+  function abreMenu() {
+    if (!menuPainel) return;
+    menuPainel.hidden = false;
+    menuVeu.hidden = false;
+    btnMenu.setAttribute("aria-expanded", "true");
+    const f = menuPainel.querySelector("button, a");
+    if (f) f.focus();
+  }
+  function fechaMenu() {
+    if (!menuPainel || menuPainel.hidden) return;
+    menuPainel.hidden = true;
+    menuVeu.hidden = true;
+    btnMenu.setAttribute("aria-expanded", "false");
+    btnMenu.focus();
+  }
+  if (btnMenu) {
+    btnMenu.addEventListener("click", function () {
+      if (menuPainel && !menuPainel.hidden) fechaMenu();
+      else abreMenu();
+    });
+  }
+  if (menuVeu) menuVeu.addEventListener("click", fechaMenu);
+  const menuFechar = $("#menu-fechar");
+  if (menuFechar) menuFechar.addEventListener("click", fechaMenu);
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" && menuPainel && !menuPainel.hidden) fechaMenu();
+  });
+
+  function abreVista(titulo, html) {
+    R.select(null);
+    fichaConteudo.innerHTML = "<h2>" + esc(titulo) + "</h2>" + html;
+    ficha.hidden = false;
+    $("#ficha-fechar").focus();
+  }
+
+  const ACAO = {
+    "roda": function () {
+      R.select(null);
+      if (btnRoda) btnRoda.click();
+      if (R.resetZoom) R.resetZoom();
+    },
+    "buscar": function () {
+      busca.focus();
+      busca.select();
+    },
+    "dozero": function () {
+      let html = "";
+      if (ORC) html += "<p class='orc-big'>R$ " + (ORC.meta.totais["2026"].loa / 1e9).toFixed(2).replace(".", ",") + " bi</p><p class='orc-sub'>é o que o orçamento federal de 2026 destina às 107 IES federais (LOA/SIOP).</p>";
+      html += "<div class='ficha-desc'>";
+      html += "<p><strong>Quem mantém</strong> — a Constituição (art. 211) divide o dever entre União, Estados e Municípios. Universidades federais e Institutos Federais (IFs) são mantidos pela União, por meio do MEC. Universidades estaduais são mantidas por cada estado; municipais, pelo município.</p>";
+      html += "<p><strong>Quem manda</strong> — o reitor de cada universidade federal e de cada IF é indicado pelo MEC e nomeado pelo Presidente da República (Decreto 1.191/1994). Universidades estaduais seguem a lei de cada estado — em geral, eleições internas de listas tríplices.</p>";
+      html += "<p><strong>Quem avalia</strong> — o INEP avalia instituições e cursos pelo SINAES (Lei 10.861/2004); a CAPES avalia a pós-graduação e o CNPq fomenta a pesquisa (Lei 11.502/2007).</p>";
+      html += "<p><strong>IFs</strong> — os 38 Institutos Federais ensinam também ensino médio técnico e formação profissional, além de graduação e pós. Por isso seu orçamento por aluno de graduação aparece inflado neste atlas.</p>";
+      html += "<p><strong>Na roda</strong> — cada linha liga uma instituição a quem mantém, supervisiona, avalia ou fomenta, e cita a norma legal. Clique em qualquer nó para abrir a ficha.</p>";
+      html += "</div><p class='ficha-fonte'>Fontes: LDB (Lei 9.394/1996), Constituição art. 211, Decreto 1.191/1994.</p>";
+      abreVista("Do zero", html);
+    },
+    "tour": function () {
+      fechaMenu();
+      if (btnRoda) btnRoda.click();
+      iniciaTour();
+    },
+    "comparar": function () {
+      if (compara.length >= 2 && btnComparaAbrir) { btnComparaAbrir.click(); return; }
+      abreVista("Comparar universidades", "<div class='ficha-desc'><p>Clique em uma instituição e depois em outra — uma barra aparece na base da tela. Com duas ou mais marcadas, o botão <strong>Comparar</strong> abre o painel lado a lado com orçamento, alunos de graduação, gasto por aluno, ano de fundação e proporção entre docentes e alunos.</p><p>Você também pode abrir qualquer ficha e tocar em <strong>comparar</strong> no topo dela.</p></div>");
+    },
+    "orcamento": function () {
+      if (btnOrc) btnOrc.click();
+    },
+    "linha-do-tempo": function () {
+      if (!CRIACAO) { abreVista("Linha do tempo", "<p class='ficha-desc'>Dado de fundação não carregado.</p>"); return; }
+      const dec = {};
+      for (const id of Object.keys(CRIACAO.anos)) {
+        const d = Math.floor(CRIACAO.anos[id] / 10) * 10;
+        dec[d] = (dec[d] || 0) + 1;
+      }
+      const keys = Object.keys(dec).map(Number).sort();
+      const max = Math.max.apply(null, keys.map(function (k) { return dec[k]; }));
+      const minAno = Math.min.apply(null, Object.values(CRIACAO.anos));
+      const maxAno = Math.max.apply(null, Object.values(CRIACAO.anos));
+      let html = "<p class='orc-sub'>" + Object.keys(CRIACAO.anos).length + " instituições com ano de fundação registrado, de " + minAno + " a " + maxAno + ".</p><ul class='orc-lista'>";
+      for (const d of keys) {
+        html += "<li><div class='linha'><span class='l-nome'>Década de " + d + "</span><span class='l-v'>" + dec[d] + "</span></div><div class='c-bar'><i style='width:" + (dec[d] / max * 100) + "%;background:var(--accent)'></i></div></li>";
+      }
+      html += "</ul><p class='ficha-fonte'>Ano de fundação das instituições — dados estruturais do atlas.</p>";
+      abreVista("Linha do tempo", html);
+    },
+    "interiorizacao": function () {
+      if (!EST || !ORC) { abreVista("Interiorização", "<p class='ficha-desc'>Dados não carregados.</p>"); return; }
+      const ag = agregUf();
+      const porEstado = Object.keys(ag).filter(function (uf) { return EST.ufs[uf]; }).map(function (uf) {
+        const u = ag[uf];
+        return { uf: uf, nome: EST.ufs[uf].nome, pctInt: u.loa ? 100 - u.cap / u.loa * 100 : 0, loa: u.loa };
+      }).sort(function (a, b) { return b.pctInt - a.pctInt; });
+      let totLoa = 0;
+      let totCap = 0;
+      for (const it of porEstado) { totLoa += it.loa; totCap += it.loa - it.pctInt / 100 * it.loa; }
+      const totInt = totLoa ? 100 - (totCap / totLoa * 100) : 0;
+      const max = porEstado.length ? porEstado[0].pctInt : 0;
+      let html = "<p class='orc-big'>" + totInt.toFixed(0) + "%</p><p class='orc-sub'>dos R$ " + (totLoa / 1e9).toFixed(2).replace(".", ",") + " bilhões do LOA 2026 das IES federais fica em sedes fora das capitais estaduais.</p><ul class='orc-lista'>";
+      for (const it of porEstado.slice(0, 10)) {
+        html += "<li><div class='linha'><span class='l-nome'>" + esc(it.uf) + " · " + esc(it.nome) + "</span><span class='l-v'>" + it.pctInt.toFixed(0) + "%</span></div><div class='c-bar'><i style='width:" + (max ? it.pctInt / max * 100 : 0) + "%;background:var(--c-if)'></i></div></li>";
+      }
+      html += "</ul><p class='orc-contexto'>Critério: % do orçamento 2026 daquelas IES com sede em município fora da capital. Estados sem IES federal não constam.</p><p class='ficha-fonte'>Fonte: LOA 2026 (SOF/SIOP) · municípios-sede do atlas.</p>";
+      abreVista("Interiorização", html);
+    },
+    "metodologia": function () {
+      let html = "<div class='ficha-desc'><p><strong>Governança</strong> — grafo estrutural: relações derivam do tipo da instituição (CF art. 211, LDB, Lei 11.892/2008, Lei 10.861/2004, Lei 11.502/2007, Decreto 1.191/1994).</p>";
+      html += "<p><strong>Orçamento</strong> — LOA e execução (empenhado/liquidado/pago) das IES federais e IFs, exercícios 2025–2026, SOF/SIOP. Exclui unidades EBSERH (hospitais universitários). Universidades estaduais não têm fonte nacional unificada.</p>";
+      html += "<p><strong>Gasto por aluno</strong> — LOA 2026 ÷ nº de alunos de graduação do Censo da Educação Superior 2024 (INEP). É um indicador comparativo, não contábil: IFs atendem também ensino médio e técnico, o que infla o valor; docentes, função docente e programas de pós não entram no denominador.</p>";
+      html += "<p><strong>Per capita</strong> — orçamento federal das IES do estado ÷ população (Censo 2022, IBGE).</p>";
+      html += "<p><strong>Interiorização</strong> — % do LOA 2026 em IES com sede fora da capital do estado.</p>";
+      html += "<p><strong>Fundação</strong> — ano de criação registrado no arquivo estrutural do atlas.</p>";
+      html += "<p>Todo número mostrado tem a fonte ao lado. Erros podem ser corrigidos via issue no GitHub.</p></div>";
+      abreVista("Metodologia", html);
+    },
+    "movimento": function () {
+      abreVista("Movimento", "<div class='ficha-desc'><p><strong>Clique</strong> em um nó para abrir a ficha com fontes e orçamento; clique de novo para fechar. <strong>Clique no fundo</strong> para limpar a seleção.</p><p><strong>Arraste</strong> para deslocar o grafo. <strong>Roda do mouse</strong> ou os botões +/− aproxima e afasta; toque duplo no botão de reset restaura a vista.</p><p><strong>Pinça</strong> — dois dedos — funciona em telas de toque. O <strong>mouse sobre um nó</strong> mostra sigla e nome.</p><p><strong>Busca</strong> — tecla <kbd>/</kbd> foca o campo de busca; <strong>Esc</strong> fecha ficha e menus.</p></div>");
+    },
+    "aneis": function () {
+      abreVista("Anéis e formas", "<div class='ficha-desc'><p><strong>Centro</strong> — o sistema: Brasil, União, Estados, Municípios.</p><p><strong>Anel de governança</strong> — MEC, INEP, CAPES, CNPq e as associações de dirigentes (ANDIFES, CONIF, ABRUEM). Nós menores e discretos.</p><p><strong>Anel externo</strong> — as 155 instituições, agrupadas por tipo e estado: federais (azul), IFs (verde-água), estaduais (âmbar), municipais (cinza).</p><p><strong>Cores</strong> — cada tipo tem sua cor; o nó ativo fica no destaque da marca.</p><p><strong>Tamanho</strong> — marque <strong>Tamanho = orçamento</strong> e o diâmetro passa a acompanhar o LOA 2026.</p><p><strong>Linhas</strong> — ligações de manutenção, supervisão, avaliação e fomento, cada uma com a norma legal na ficha.</p></div>");
+    },
+    "projeto": function () {
+      abreVista("Projeto aberto", "<div class='ficha-desc'><p>Atlas apartidário e aberto: sem partido, sem ideologia, sem financiamento de campanha — só dados públicos com a fonte ao lado de cada número.</p><p>Texto e código sob licença MIT; dados das fontes oficiais citadas em cada bloco. Modelado no espírito do Atlas da República.</p><p>Encontrou um erro? <a href='https://github.com/jhsfelix/atlas-universidades-publicas-e-ifs/issues' target='_blank' rel='noopener'>Abra uma issue</a> — correções são bem-vindas.</p></div>");
+    }
+  };
+
+  menuPainel.addEventListener("click", function (ev) {
+    const it = ev.target.closest(".menu-item");
+    if (!it || it.getAttribute("href")) return;
+    const fn = ACAO[it.getAttribute("data-acao")];
+    fechaMenu();
+    if (fn) fn();
+  });
+  if (!ORC) { const b = menuPainel.querySelector("[data-acao='orcamento']"); if (b) b.hidden = true; }
+  if (!CRIACAO) { const b = menuPainel.querySelector("[data-acao='linha-do-tempo']"); if (b) b.hidden = true; }
 })();
+
