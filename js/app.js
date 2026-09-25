@@ -29,6 +29,7 @@
   const EST = window.ESTADOS || null;
   const CRIACAO = window.CRIACAO || null;
   const MAT = window.MATRICULAS || null;
+  const PG = window.POSGRAD || null;
   const ORC_CHAVES = [
     { k: "loa", r: "Dotação (LOA)" },
     { k: "autorizado", r: "Autorizado" },
@@ -138,6 +139,44 @@
       .sort(function (a, b) { return b.pa - a.pa; });
     ls.forEach(function (x, i) { RANKS_AL.set(x.id, { pos: i + 1, total: ls.length }); });
     return RANKS_AL;
+  }
+
+  let RANKS_POS = null;
+  function ranksPos() {
+    if (RANKS_POS) return RANKS_POS;
+    RANKS_POS = new Map();
+    if (!PG) return RANKS_POS;
+    const ls = R.institucoes.filter(function (n) { return PG.prog[n.id]; })
+      .map(function (n) { return { id: n.id, q: PG.prog[n.id].n }; })
+      .sort(function (a, b) { return b.q - a.q; });
+    ls.forEach(function (x, i) { RANKS_POS.set(x.id, { pos: i + 1, total: ls.length }); });
+    return RANKS_POS;
+  }
+
+  function renderPos(n) {
+    if (!PG) return "";
+    const p = PG.prog[n.id];
+    const b = PG.bols[n.id];
+    let html = "<h3>Pós-graduação (CAPES)</h3>";
+    if (!p) {
+      html += "<p class='orc-contexto'>Sem programas de pós-graduação stricto sensu registrados na avaliação CAPES 2024.</p>";
+      return html;
+    }
+    const r = ranksPos().get(n.id);
+    html += "<p class='orc-big'>" + p.n + "</p><p class='orc-sub'>programas stricto sensu em funcionamento (2024)" + (r ? " · " + r.pos + "ª de " + r.total + " IES mapeadas com pós" : "") + "</p>";
+    html += "<table class='ficha-orc'><tbody>";
+    if (p.me) html += "<tr><td class='k'>Mestrados acadêmicos</td><td class='v'>" + p.me + "</td></tr>";
+    if (p.do) html += "<tr><td class='k'>Doutorados</td><td class='v'>" + p.do + "</td></tr>";
+    if (p.mp) html += "<tr><td class='k'>Mestrados profissionais</td><td class='v'>" + p.mp + "</td></tr>";
+    if (p.dp) html += "<tr><td class='k'>Doutorados profissionais</td><td class='v'>" + p.dp + "</td></tr>";
+    html += "<tr><td class='k'>Nota CAPES — máxima / média</td><td class='v'>" + (p.max || "—") + " / " + (p.med ? String(p.med).replace(".", ",") : "—") + "</td></tr>";
+    if (b) {
+      html += "<tr><td class='k'>Bolsas CAPES vigentes (2025-26)</td><td class='v'>" + fmtInt(b.tot) + "</td></tr>";
+      html += "<tr><td class='k'>mestrado / doutorado / pós-doc</td><td class='v'>" + fmtInt(b.me) + " / " + fmtInt(b.do) + (b.po ? " / " + fmtInt(b.po) : "") + "</td></tr>";
+    }
+    html += "</tbody></table>";
+    html += "<p class='ficha-fonte'>Fonte: <a href='" + esc(PG.meta.url_prog) + "' target='_blank' rel='noopener'>CAPES — programas da pós-graduação 2024</a> e <a href='" + esc(PG.meta.url_bolsas) + "' target='_blank' rel='noopener'>bolsistas DPB 2025-2026</a> · dados abertos.</p>";
+    return html;
   }
 
   function renderGnd(id) {
@@ -543,6 +582,7 @@
     html += "</ul>";
     const orc = ORC && ORC.valores[n.id];
     if (orc) html += renderOrc(orc, n);
+    html += renderPos(n);
     return html;
   }
 
@@ -830,6 +870,7 @@
         html += "<p class='orc-big'>" + fmtCompact(orc["2026"].loa) + "</p>";
         html += "<p class='orc-sub'>LOA 2026" + (rank ? " · " + rank.pos + "ª de " + rank.total + " " + (n.tipo === "federal" ? "universidades federais" : "Institutos Federais") : "") + "</p>";
         if (MAT && MAT.mat[id] && orc["2026"] && orc["2026"].loa) html += "<p class='orc-sub'>~" + fmtInt(MAT.mat[id]) + " alunos de graduação (Censo 2024) · R$ " + fmtInt(Math.round(orc["2026"].loa / MAT.mat[id])) + " por aluno</p>";
+        if (PG && PG.prog[id]) html += "<p class='orc-sub'>Pós-graduação (CAPES 2024): " + PG.prog[id].n + " programas stricto sensu · nota máx. " + (PG.prog[id].max || "—") + (PG.bols[id] ? " · " + fmtInt(PG.bols[id].tot) + " bolsas vigentes" : "") + "</p>";
         html += renderGnd(id);
         if (ORCH && ORCH.valores[id]) html += chartLinha(ORCH.valores[id], ORCH.anos, "Evolução de " + n.label);
       }
@@ -990,6 +1031,7 @@
       html += "<p><strong>Per capita</strong> — orçamento federal das IES do estado ÷ população (Censo 2022, IBGE).</p>";
       html += "<p><strong>Interiorização</strong> — % do LOA 2026 em IES com sede fora da capital do estado.</p>";
       html += "<p><strong>Fundação</strong> — ano de criação registrado no arquivo estrutural do atlas.</p>";
+      if (PG) html += "<p><strong>Pós-graduação</strong> — programas stricto sensu em funcionamento e nota CAPES da avaliação 2024 (COLSUCUP); bolsas de mestrado, doutorado e pós-doutorado vigentes contadas dos bolsistas da Diretoria de Programas e Bolsas no País (2025-2026). Programas privados não aparecem: o atlas mapeia só instituições públicas. Bolsas de iniciação científica são do CNPq e não constam aqui.</p>";
       html += "<p>Todo número mostrado tem a fonte ao lado. Erros podem ser corrigidos via issue no GitHub.</p></div>";
       abreVista("Metodologia", html);
     },
