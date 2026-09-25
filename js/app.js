@@ -304,9 +304,10 @@
       d += (d ? " L" : " M") + x(i).toFixed(1) + " " + y(vals[i]).toFixed(1);
     }
     const dArea = d + " L" + x(idxs[idxs.length - 1]).toFixed(1) + " " + Y1 + " L" + x(idxs[0]).toFixed(1) + " " + Y1 + " Z";
+    const raio = idxs.length > 12 ? 1.6 : 2.6;
     let pontos = "";
     for (const i of idxs) {
-      pontos += "<circle cx='" + x(i).toFixed(1) + "' cy='" + y(vals[i]).toFixed(1) + "' r='2.6'><title>" + anos[i] + ": " + fmtCompact(vals[i]) + "</title></circle>";
+      pontos += "<circle cx='" + x(i).toFixed(1) + "' cy='" + y(vals[i]).toFixed(1) + "' r='" + raio + "'><title>" + anos[i] + ": " + fmtCompact(vals[i]) + "</title></circle>";
     }
     const titulos = anos.map(function (a, i) { return a + ": " + (vals[i] == null ? "—" : fmtCompact(vals[i])); }).join(" · ");
     return "<svg class='hist' viewBox='0 0 320 92' role='img' aria-label='" + esc(titulo || "Evolução do orçamento") + "'><title>" + esc(titulos) + "</title>" +
@@ -405,7 +406,7 @@
     html += "<div class='orc-leg'>" + gndArr.map(function (g) { return "<span><i style='background:" + (GND_CORES[g.k] || "var(--muted)") + "'></i>" + esc(GND_ROTULOS[g.k] || g.k) + " · " + (g.v / gndTotal * 100).toFixed(0) + "% · " + fmtCompact(g.v) + "</span>"; }).join("") + "</div>";
 
     if (ORCH) {
-      html += "<h3>Evolução 2019–2026</h3>";
+      html += "<h3>Evolução " + ORCH.anos[0] + "–" + ORCH.anos[ORCH.anos.length - 1] + " (nominal)</h3>";
       const porAno = ORCH.anos.map(function (a, i) {
         let s = null;
         for (const id of Object.keys(ORCH.valores)) {
@@ -415,6 +416,13 @@
         return s;
       });
       html += chartLinha(porAno, ORCH.anos, "Evolução do orçamento das IES federais");
+      const p0 = porAno.find(function (v) { return v != null; });
+      const pF = porAno[porAno.length - 1];
+      if (p0 && pF) {
+        const a0 = ORCH.anos[porAno.indexOf(p0)];
+        const vez = pF / p0;
+        html += "<p class='orc-contexto'>Somando as instituições presentes em cada exercício: de " + fmtCompact(p0) + " (" + a0 + ") para " + fmtCompact(pF) + " (" + ORCH.anos[ORCH.anos.length - 1] + ") — " + (vez >= 1 ? "×" + vez.toFixed(1) : "−" + ((1 - vez) * 100).toFixed(0) + "%") + " em valores nominais. IFs entram como dotação própria a partir de 2009–2010.</p>";
+      }
     }
 
     html += "<div class='orc-listas'>";
@@ -1094,7 +1102,7 @@
     },
     "metodologia": function () {
       let html = "<div class='ficha-desc'><p><strong>Governança</strong> — grafo estrutural: relações derivam do tipo da instituição (CF art. 211, LDB, Lei 11.892/2008, Lei 10.861/2004, Lei 11.502/2007, Decreto 1.191/1994).</p>";
-      html += "<p><strong>Orçamento</strong> — LOA e execução (empenhado/liquidado/pago) das IES federais e IFs, exercícios 2025–2026, SOF/SIOP. Exclui unidades EBSERH (hospitais universitários). Universidades estaduais não têm fonte nacional unificada.</p>";
+      html += "<p><strong>Orçamento</strong> — LOA e execução (empenhado/liquidado/pago) das IES federais e IFs, exercícios 2025–2026, SOF/SIOP. A série histórica de dotações da LOA cobre 2002–2026 (valores nominais, sem correção pela inflação; nos exercícios anteriores à criação da instituição, o valor é ausente). Exclui unidades EBSERH (hospitais universitários). Universidades estaduais não têm fonte nacional unificada.</p>";
       html += "<p><strong>Gasto por aluno</strong> — LOA 2026 ÷ nº de alunos de graduação do Censo da Educação Superior 2024 (INEP). É um indicador comparativo, não contábil: IFs atendem também ensino médio e técnico, o que infla o valor; docentes, função docente e programas de pós não entram no denominador.</p>";
       html += "<p><strong>Per capita</strong> — orçamento federal das IES do estado ÷ população (Censo 2022, IBGE).</p>";
       html += "<p><strong>Interiorização</strong> — % do LOA 2026 em IES com sede fora da capital do estado.</p>";
