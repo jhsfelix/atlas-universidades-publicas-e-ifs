@@ -26,6 +26,8 @@
   const ORCD = window.ORC_DESPESAS || null;
   const ORCE = window.ORC_EXEC || null;
   const ORCH = window.ORC_HIST || null;
+  const EST = window.ESTADOS || null;
+  const CRIACAO = window.CRIACAO || null;
   const ORC_CHAVES = [
     { k: "loa", r: "Dotação (LOA)" },
     { k: "autorizado", r: "Autorizado" },
@@ -60,6 +62,30 @@
     if (v >= 1e9) return "R$ " + (v / 1e9).toFixed(2).replace(".", ",") + " bi";
     if (v >= 1e6) return "R$ " + (v / 1e6).toFixed(1).replace(".", ",") + " mi";
     return "R$ " + v.toLocaleString("pt-BR");
+  }
+
+  function fmtInt(v) { return v.toLocaleString("pt-BR"); }
+
+  let UF_AGREG = null;
+  function agregUf() {
+    if (UF_AGREG) return UF_AGREG;
+    const map = {};
+    for (const n of R.institucoes) {
+      if (!n.uf || !ORC || !ORC.valores[n.id]) continue;
+      if (!map[n.uf]) map[n.uf] = { loa: 0, cap: 0, count: 0 };
+      map[n.uf].count++;
+      const v = ORC.valores[n.id]["2026"].loa;
+      map[n.uf].loa += v;
+      const capital = EST && EST.ufs[n.uf] ? normaliza(EST.ufs[n.uf].capital) : "";
+      if (capital && normaliza(n.cidade) === capital) map[n.uf].cap += v;
+    }
+    UF_AGREG = map;
+    return map;
+  }
+
+  function ehCapital(n) {
+    if (!EST || !n.uf || !n.cidade) return false;
+    return normaliza(n.cidade) === normaliza(EST.ufs[n.uf].capital || "");
   }
 
   function execBar(v) {
@@ -201,6 +227,14 @@
     const rank = ranks().get(n.id);
     let html = "<h3>Orçamento (LOA)</h3>";
     if (rank) html += "<p class='orc-rank'>" + fmtCompact(orc["2026"].loa) + " em 2026 · " + rank.pos + "ª maior dotação entre " + rank.total + " " + rot + "</p>";
+    if (EST && EST.ufs[n.uf]) {
+      const u = agregUf()[n.uf];
+      const ufD = EST.ufs[n.uf];
+      if (u && u.loa && ufD.pop) {
+        const pctInt = 100 - u.cap / u.loa * 100;
+        html += "<p class='orc-contexto'>Estado: " + esc(ufD.nome) + " (" + fmtInt(ufD.pop) + " hab. — Censo 2022) · R$ " + fmtInt(Math.round(u.loa / ufD.pop)) + " por habitante nas IES federais do estado · " + pctInt.toFixed(0) + "% do orçamento federal do estado fica fora da capital</p>";
+      }
+    }
     html += "<table class='ficha-orc'>";
     for (const ano of ORC.meta.exercicios) {
       const v = orc[ano];
@@ -287,6 +321,53 @@
     }
     html += "</ul></div>";
     html += "</div>";
+
+    if (EST) {
+      const ag = agregUf();
+      const porestado = Object.keys(ag).filter(function (uf) { return EST.ufs[uf]; }).map(function (uf) {
+        const u = ag[uf];
+        return { uf: uf, nome: EST.ufs[uf].nome, pop: EST.ufs[uf].pop, loa: u.loa, pctInt: 100 - u.cap / u.loa * 100, pc: u.loa / EST.ufs[uf].pop };
+      });
+      let totLoa = 0;
+      let totCap = 0;
+      for (const it of porestado) { totLoa += it.loa; totCap += it.loa - it.pctInt / 100 * it.loa; }
+
+      const porPc = porestado.slice().sort(function (a, b) { return b.pc - a.pc; });
+      const maxPc = porPc.length ? porPc[0].pc : 0;
+      html += "<h3>Per capita — orçamento federal das IES por habitante do estado</h3>";
+      html += "<ul class='orc-lista'>";
+      for (const it of porPc.slice(0, 5)) {
+        html += "<li><div class='linha'><span class='l-nome'>" + esc(it.uf) + " · " + esc(it.nome) + "</span><span class='l-v'>R$ " + fmtInt(Math.round(it.pc)) + "/hab</span></div><div class='c-bar'><i style='width:" + (maxPc ? it.pc / maxPc * 100 : 0) + "%;background:var(--accent)'></i></div></li>";
+      }
+      html += "</ul>";
+      html += "<p class='orc-contexto'>Menores: " + porPc.slice(-3).reverse().map(function (x) { return esc(x.uf) + " (R$ " + fmtInt(Math.round(x.pc)) + ")"; }).join(", ") + " · população: Censo 2022 (IBGE)</p>";
+
+      const porInt = porestado.slice().sort(function (a, b) { return b.pctInt - a.pctInt; });
+      const totInt = totLoa ? 100 - (totCap / totLoa * 100) : 0;
+      html += "<h3>Interiorização — quanto do orçamento federal fica fora das capitais</h3>";
+      html += "<p class='orc-contexto'>" + totInt.toFixed(0) + "% dos R$ " + (totLoa / 1e9).toFixed(2).replace(".", ",") + " bilhões das IES federais é aplicado em sedes fora das capitais estaduais.</p>";
+      html += "<ul class='orc-lista'>";
+      const maxInt = porInt.length ? porInt[0].pctInt : 0;
+      for (const it of porInt.slice(0, 5)) {
+        html += "<li><div class='linha'><span class='l-nome'>" + esc(it.uf) + " · " + esc(it.nome) + "</span><span class='l-v'>" + it.pctInt.toFixed(0) + "% no interior</span></div><div class='c-bar'><i style='width:" + (maxInt ? it.pctInt / maxInt * 100 : 0) + "%;background:var(--c-if)'></i></div></li>";
+      }
+      html += "</ul>";
+      html += "<p class='orc-contexto'>Menor interiorização: " + porInt.slice(-3).map(function (x) { return esc(x.uf) + " (" + x.pctInt.toFixed(0) + "%)"; }).join(", ") + "</p>";
+    }
+
+    if (CRIACAO) {
+      const dec = {};
+      for (const id of Object.keys(CRIACAO.anos)) dec[Math.floor(CRIACAO.anos[id] / 10) * 10] = (dec[Math.floor(CRIACAO.anos[id] / 10) * 10] || 0) + 1;
+      const decs = Object.keys(dec).map(Number).sort(function (a, b) { return a - b; });
+      const maxDec = Math.max.apply(null, decs.map(function (d) { return dec[d]; }));
+      html += "<h3>Fundação — de onde vêm as IES mapeadas</h3>";
+      html += "<ul class='orc-lista'>";
+      for (const d of decs) {
+        html += "<li><div class='linha'><span class='l-nome'>" + d + "–" + (d + 9) + "</span><span class='l-v'>" + dec[d] + "</span></div><div class='c-bar'><i style='width:" + (dec[d] / maxDec * 100) + "%;background:var(--c-federal)'></i></div></li>";
+      }
+      html += "</ul>";
+      html += "<p class='orc-contexto'>Duas grandes ondas: os anos 1960 e a expansão iniciada nos anos 2000. A UFOP remonta à Escola de Farmácia de Ouro Preto (1839); os 38 IFs resultam da Lei 11.892/2008. Ano da fundação da instituição de origem ou da lei de criação (desmembramentos).</p>";
+    }
 
     html += "<p class='ficha-fonte'>Fonte: <a href='" + esc(ORC.meta.url) + "' target='_blank' rel='noopener'>" + esc(ORC.meta.fonte) + "</a> · dados abertos. LOA e execução das unidades orçamentárias próprias; exclui hospitais universitários (EBSERH) e instituições estaduais/municipais.</p>";
     return html;
@@ -416,11 +497,12 @@
   function renderInstituicao(n) {
     const rels = R.edges.filter(function (e) { return e.t === n.id; });
     let html = "<p class='ficha-meta'><span class='badge tipo-" + n.tipo + "'>" + ROTULOS[n.tipo] + "</span>";
-    if (n.uf) html += " <span class='ficha-uf'>" + esc(n.uf) + (n.cidade ? " · " + esc(n.cidade) : "") + "</span>";
+    if (n.uf) html += " <span class='ficha-uf'>" + esc(n.uf) + (n.cidade ? " · " + esc(n.cidade) : "") + (ehCapital(n) ? " · capital" : "") + "</span>";
+    if (CRIACAO && CRIACAO.anos[n.id]) html += " <span class='ficha-uf'>fundação " + CRIACAO.anos[n.id] + "</span>";
     html += "</p>";
     html += "<h2>" + esc(n.label) + "</h2>";
     html += "<p class='ficha-nome'>" + esc(n.nome) + "</p>";
-    if (n.site) html += "<p class='ficha-site'><a href='" + esc(n.site) + "' target='_blank' rel='noopener'>site oficial</a> <button type='button' class='ficha-link'>copiar link</button></p>";
+    if (n.site) html += "<p class='ficha-site'><a href='" + esc(n.site) + "' target='_blank' rel='noopener'>site oficial</a> <button type='button' class='ficha-link'>copiar link</button> <button type='button' class='ficha-link ficha-print'>imprimir / salvar PDF</button> <button type='button' class='ficha-link ficha-compara'>comparar</button></p>";
     html += "<h3>Quem manda aqui</h3><ul class='ficha-rels'>";
     for (const e of rels) {
       const origem = R.byId.get(e.s);
@@ -474,8 +556,19 @@
     } else {
       fichaConteudo.innerHTML = renderHub(n);
     }
-    const linkBtn = fichaConteudo.querySelector(".ficha-link");
-    if (linkBtn) {
+    const linkBtns = fichaConteudo.querySelectorAll(".ficha-link");
+    linkBtns.forEach(function (linkBtn) {
+      if (linkBtn.classList.contains("ficha-print")) {
+        linkBtn.addEventListener("click", function () { window.print(); });
+        return;
+      }
+      if (linkBtn.classList.contains("ficha-compara")) {
+        linkBtn.addEventListener("click", function () {
+          toggleComparar(id);
+          linkBtn.textContent = compara.indexOf(id) !== -1 ? "na comparação" : "comparar";
+        });
+        return;
+      }
       linkBtn.addEventListener("click", function () {
         const url = location.href.split("?")[0] + (id ? "?id=" + id : "");
         const ok = function () {
@@ -484,7 +577,7 @@
         };
         try { navigator.clipboard.writeText(url).then(ok, ok); } catch (e) { ok(); }
       });
-    }
+    });
     ficha.hidden = false;
     $("#ficha-fechar").focus();
   }
@@ -581,10 +674,11 @@
       const diam = d.count ? Math.round(20 + 26 * Math.sqrt(d.count / (maxCount || 1))) : 0;
       const intens = d.loa ? Math.round(18 + 72 * Math.sqrt(d.loa / (maxLoa || 1))) : 0;
       const cor = d.loa ? "background:color-mix(in srgb, var(--accent) " + intens + "%, var(--line))" : "background:var(--line)";
+      const pop = EST && EST.ufs[uf] ? EST.ufs[uf].pop : 0;
       html += "<button type='button' class='uf-cel' data-uf='" + uf + "' style='grid-column:" + (m[1] + 1) + ";grid-row:" + (m[2] + 1) + "' title='" + uf + (d.loa ? " · LOA 2026 das IES federais: " + fmtCompact(d.loa) : " · sem IES federal") + "'>" +
         "<span class='uf-bolha' style='width:" + diam + "px;height:" + diam + "px;" + cor + "'></span>" +
         "<span class='uf-sigla'>" + uf + "</span>" +
-        "<span class='uf-info'>" + d.count + " IES" + (d.loa ? " · " + fmtCompact(d.loa) : "") + "</span></button>";
+        "<span class='uf-info'>" + d.count + " IES" + (d.loa ? " · " + fmtCompact(d.loa) + (pop ? " · R$ " + fmtInt(Math.round(d.loa / pop)) + "/hab" : "") : "") + "</span></button>";
     }
     html += "</div>";
     cont.innerHTML = html;
@@ -667,6 +761,59 @@
   if (tourAnterior) tourAnterior.addEventListener("click", function () { if (passo > 0) { passo--; mostraPasso(); } });
   const tourSair = $("#tour-sair");
   if (tourSair) tourSair.addEventListener("click", saiTour);
+
+  let compara = [];
+  const comparaBar = $("#compara-bar");
+  const comparaInfo = $("#compara-info");
+  const painelCompara = $("#painel-compara");
+  const painelComparaCont = $("#painel-compara-conteudo");
+  function atualizaBarra() {
+    if (!comparaBar) return;
+    if (!compara.length) { comparaBar.hidden = true; return; }
+    comparaBar.hidden = false;
+    if (comparaInfo) comparaInfo.textContent = compara.map(function (id) { return R.byId.get(id) ? R.byId.get(id).label : ""; }).join(" × ") + (compara.length < 2 ? " — escolha outra instituição" : "");
+    const abrir = $("#compara-abrir");
+    if (abrir) abrir.disabled = compara.length !== 2;
+  }
+  function toggleComparar(id) {
+    if (compara.indexOf(id) !== -1) compara = compara.filter(function (x) { return x !== id; });
+    else if (compara.length >= 2) compara = [compara[1], id];
+    else compara.push(id);
+    atualizaBarra();
+  }
+  function renderCompara() {
+    if (!painelComparaCont) return;
+    let html = "<div class='compara-cols'>";
+    for (const id of compara) {
+      const n = R.byId.get(id);
+      if (!n) continue;
+      html += "<div>";
+      html += "<p class='ficha-meta'><span class='badge tipo-" + n.tipo + "'>" + ROTULOS[n.tipo] + "</span></p>";
+      html += "<h3>" + esc(n.label) + "</h3>";
+      html += "<p class='ficha-nome'>" + esc(n.nome) + "</p>";
+      if (n.uf) html += "<p class='orc-contexto'>" + esc(n.uf) + (n.cidade ? " · " + esc(n.cidade) : "") + (ehCapital(n) ? " · capital" : "") + (CRIACAO && CRIACAO.anos[id] ? " · fundação " + CRIACAO.anos[id] : "") + "</p>";
+      const orc = ORC && ORC.valores[id];
+      if (orc) {
+        const rank = ranks().get(id);
+        html += "<p class='orc-big'>" + fmtCompact(orc["2026"].loa) + "</p>";
+        html += "<p class='orc-sub'>LOA 2026" + (rank ? " · " + rank.pos + "ª de " + rank.total + " " + (n.tipo === "federal" ? "universidades federais" : "Institutos Federais") : "") + "</p>";
+        html += renderGnd(id);
+        if (ORCH && ORCH.valores[id]) html += chartLinha(ORCH.valores[id], ORCH.anos, "Evolução de " + n.label);
+      }
+      html += "</div>";
+    }
+    html += "</div>";
+    painelComparaCont.innerHTML = html;
+  }
+  const btnComparaAbrir = $("#compara-abrir");
+  if (btnComparaAbrir) btnComparaAbrir.addEventListener("click", function () {
+    renderCompara();
+    if (painelCompara) painelCompara.hidden = false;
+  });
+  const btnComparaFechar = $("#compara-fechar");
+  if (btnComparaFechar) btnComparaFechar.addEventListener("click", function () { if (painelCompara) painelCompara.hidden = true; });
+  const btnComparaLimpar = $("#compara-limpar");
+  if (btnComparaLimpar) btnComparaLimpar.addEventListener("click", function () { compara = []; atualizaBarra(); });
 
   const btnTema = $("#btn-tema");
   function aplicaTema(t) {
