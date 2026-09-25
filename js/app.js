@@ -1036,7 +1036,21 @@
     },
     "comparar": function () {
       if (compara.length >= 2 && btnComparaAbrir) { btnComparaAbrir.click(); return; }
-      abreVista("Comparar universidades", "<div class='ficha-desc'><p>Clique em uma instituição e depois em outra — uma barra aparece na base da tela. Com duas ou mais marcadas, o botão <strong>Comparar</strong> abre o painel lado a lado com orçamento, alunos de graduação, gasto por aluno, ano de fundação e proporção entre docentes e alunos.</p><p>Você também pode abrir qualquer ficha e tocar em <strong>comparar</strong> no topo dela.</p></div>");
+      const top = R.institucoes.filter(function (n) { return ORC && ORC.valores[n.id]; })
+        .sort(function (a, b) { return ORC.valores[b.id]["2026"].loa - ORC.valores[a.id]["2026"].loa; })
+        .slice(0, 2);
+      let html = "<div class='ficha-desc'><p>Clique em uma instituição e depois em outra — uma barra aparece na base da tela. Com duas ou mais marcadas, o botão <strong>Comparar</strong> abre o painel lado a lado com orçamento, alunos de graduação, gasto por aluno, pós-graduação, bolsas e ano de fundação.</p><p>Você também pode abrir qualquer ficha e tocar em <strong>comparar</strong> no topo dela.</p></div>";
+      if (top.length === 2) {
+        html += "<p><button type='button' class='ficha-link' id='vista-compara-demo'>Ver exemplo: " + esc(top[0].label) + " × " + esc(top[1].label) + "</button></p>";
+      }
+      abreVista("Comparar universidades", html);
+      const demo = document.getElementById("vista-compara-demo");
+      if (demo) demo.addEventListener("click", function () {
+        compara = top.map(function (n) { return n.id; });
+        atualizaBarra();
+        renderCompara();
+        painelCompara.hidden = false;
+      });
     },
     "orcamento": function () {
       if (btnOrc) btnOrc.click();
