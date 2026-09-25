@@ -30,6 +30,7 @@
   const CRIACAO = window.CRIACAO || null;
   const MAT = window.MATRICULAS || null;
   const PG = window.POSGRAD || null;
+  const CNQ = window.CNPQD || null;
   const ORC_CHAVES = [
     { k: "loa", r: "Dotação (LOA)" },
     { k: "autorizado", r: "Autorizado" },
@@ -176,6 +177,42 @@
     }
     html += "</tbody></table>";
     html += "<p class='ficha-fonte'>Fonte: <a href='" + esc(PG.meta.url_prog) + "' target='_blank' rel='noopener'>CAPES — programas da pós-graduação 2024</a> e <a href='" + esc(PG.meta.url_bolsas) + "' target='_blank' rel='noopener'>bolsistas DPB 2025-2026</a> · dados abertos.</p>";
+    return html;
+  }
+
+  let RANKS_IC = null;
+  function ranksIc() {
+    if (RANKS_IC) return RANKS_IC;
+    RANKS_IC = new Map();
+    if (!CNQ) return RANKS_IC;
+    const ls = R.institucoes.filter(function (n) { return CNQ.ies[n.id]; })
+      .map(function (n) { return { id: n.id, ic: CNQ.ies[n.id].ic }; })
+      .sort(function (a, b) { return b.ic - a.ic; });
+    ls.forEach(function (x, i) { RANKS_IC.set(x.id, { pos: i + 1, total: ls.length }); });
+    return RANKS_IC;
+  }
+
+  function renderCnpq(n) {
+    if (!CNQ) return "";
+    const e = CNQ.ies[n.id];
+    let html = "<h3>Pesquisa (CNPq)</h3>";
+    if (!e) {
+      html += "<p class='orc-contexto'>Sem bolsas do CNPq pagas em 2023 com vínculo à instituição nos dados abertos.</p>";
+      return html;
+    }
+    const r = ranksIc().get(n.id);
+    html += "<p class='orc-big'>" + fmtInt(e.tot) + "</p><p class='orc-sub'>bolsas e auxílios pagos pelo CNPq em 2023 com vínculo à instituição</p>";
+    html += "<table class='ficha-orc'><tbody>";
+    html += "<tr><td class='k'>Iniciação científica (graduação)</td><td class='v'>" + fmtInt(e.ic) + (r ? " · " + r.pos + "ª de " + r.total : "") + "</td></tr>";
+    if (e.icj) html += "<tr><td class='k'>IC Júnior (ensino médio)</td><td class='v'>" + fmtInt(e.icj) + "</td></tr>";
+    if (e.it) html += "<tr><td class='k'>Iniciação tecnológica</td><td class='v'>" + fmtInt(e.it) + "</td></tr>";
+    if (e.ms) html += "<tr><td class='k'>Mestrado</td><td class='v'>" + fmtInt(e.ms) + "</td></tr>";
+    if (e.do) html += "<tr><td class='k'>Doutorado</td><td class='v'>" + fmtInt(e.do) + "</td></tr>";
+    if (e.pq) html += "<tr><td class='k'>Produtividade em pesquisa (PQ)</td><td class='v'>" + fmtInt(e.pq) + "</td></tr>";
+    if (e.po) html += "<tr><td class='k'>Pós-doutorado</td><td class='v'>" + fmtInt(e.po) + "</td></tr>";
+    if (e.valor) html += "<tr><td class='k'>Pago em IC no ano</td><td class='v'>R$ " + fmtInt(e.valor) + "</td></tr>";
+    html += "</tbody></table>";
+    html += "<p class='ficha-fonte'>Fonte: <a href='" + esc(CNQ.meta.url) + "' target='_blank' rel='noopener'>CNPq — bolsas e auxílios pagos 2023</a> · dados abertos. Contagem por processo pago no ano, não por vigência.</p>";
     return html;
   }
 
@@ -583,6 +620,7 @@
     const orc = ORC && ORC.valores[n.id];
     if (orc) html += renderOrc(orc, n);
     html += renderPos(n);
+    html += renderCnpq(n);
     return html;
   }
 
@@ -871,6 +909,7 @@
         html += "<p class='orc-sub'>LOA 2026" + (rank ? " · " + rank.pos + "ª de " + rank.total + " " + (n.tipo === "federal" ? "universidades federais" : "Institutos Federais") : "") + "</p>";
         if (MAT && MAT.mat[id] && orc["2026"] && orc["2026"].loa) html += "<p class='orc-sub'>~" + fmtInt(MAT.mat[id]) + " alunos de graduação (Censo 2024) · R$ " + fmtInt(Math.round(orc["2026"].loa / MAT.mat[id])) + " por aluno</p>";
         if (PG && PG.prog[id]) html += "<p class='orc-sub'>Pós-graduação (CAPES 2024): " + PG.prog[id].n + " programas stricto sensu · nota máx. " + (PG.prog[id].max || "—") + (PG.bols[id] ? " · " + fmtInt(PG.bols[id].tot) + " bolsas vigentes" : "") + "</p>";
+        if (CNQ && CNQ.ies[id]) html += "<p class='orc-sub'>CNPq 2023: " + fmtInt(CNQ.ies[id].tot) + " bolsas pagas · IC " + fmtInt(CNQ.ies[id].ic) + " · mestrado " + fmtInt(CNQ.ies[id].ms) + " · doutorado " + fmtInt(CNQ.ies[id].do) + "</p>";
         html += renderGnd(id);
         if (ORCH && ORCH.valores[id]) html += chartLinha(ORCH.valores[id], ORCH.anos, "Evolução de " + n.label);
       }
@@ -1031,7 +1070,8 @@
       html += "<p><strong>Per capita</strong> — orçamento federal das IES do estado ÷ população (Censo 2022, IBGE).</p>";
       html += "<p><strong>Interiorização</strong> — % do LOA 2026 em IES com sede fora da capital do estado.</p>";
       html += "<p><strong>Fundação</strong> — ano de criação registrado no arquivo estrutural do atlas.</p>";
-      if (PG) html += "<p><strong>Pós-graduação</strong> — programas stricto sensu em funcionamento e nota CAPES da avaliação 2024 (COLSUCUP); bolsas de mestrado, doutorado e pós-doutorado vigentes contadas dos bolsistas da Diretoria de Programas e Bolsas no País (2025-2026). Programas privados não aparecem: o atlas mapeia só instituições públicas. Bolsas de iniciação científica são do CNPq e não constam aqui.</p>";
+      if (PG) html += "<p><strong>Pós-graduação</strong> — programas stricto sensu em funcionamento e nota CAPES da avaliação 2024 (COLSUCUP); bolsas de mestrado, doutorado e pós-doutorado vigentes contadas dos bolsistas da Diretoria de Programas e Bolsas no País (2025-2026). Programas privados não aparecem: o atlas mapeia só instituições públicas. As bolsas de iniciação científica constam na seção Pesquisa (CNPq), logo abaixo.</p>";
+      if (CNQ) html += "<p><strong>Pesquisa (CNPq)</strong> — bolsas e auxílios pagos pelo CNPq em 2023, contadas por processo pago no ano (não por vigência): iniciação científica (graduação), IC Júnior (ensino médio), iniciação tecnológica, mestrado, doutorado, produtividade em pesquisa e pós-doutorado. A soma não equivale a bolsistas ativos.</p>";
       html += "<p>Todo número mostrado tem a fonte ao lado. Erros podem ser corrigidos via issue no GitHub.</p></div>";
       abreVista("Metodologia", html);
     },
